@@ -80,12 +80,14 @@ fn test_follow_simple() {
         .build();
 
     let a = grammar.symbol("A").unwrap();
+    let b = grammar.symbol("B").unwrap();
     let x = grammar.symbol("x").unwrap();
     let y = grammar.symbol("y").unwrap();
 
     let analysis = GrammarAnalysis::build(&grammar);
 
     assert_eq!(analysis.follow(a), [x, y].iter().copied().collect());
+    assert_eq!(analysis.follow(b), [].iter().copied().collect());
 }
 
 /// Make sure FIRST(A) is defined in the "obvious" case.
@@ -246,7 +248,7 @@ fn test_follow_nullable2() {
 }
 
 #[test]
-fn test_foo() {
+fn test_first2() {
     let grammar = Grammar::new()
         .symbol("A")
         .symbol("B")

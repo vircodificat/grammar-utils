@@ -65,6 +65,7 @@ impl<'g> GrammarAnalysis<'g> {
                     first_follows.link(FFNode::First(rule.lhs()), FFNode::First(symbol));
                 }
 
+                // if we'ved reached the last nullable nonterminal, break early
                 if !nullables.contains(&symbol) {
                     break;
                 }

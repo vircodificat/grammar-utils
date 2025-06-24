@@ -111,6 +111,10 @@ impl<'g> Symbol<'g> {
 }
 
 impl<'g> Rule<'g> {
+    pub fn grammar(&self) -> &'g Grammar {
+        self.grammar
+    }
+
     fn data(&self) -> &RuleData {
         &self.grammar.rules[self.index.0]
     }
