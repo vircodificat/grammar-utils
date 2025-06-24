@@ -1,6 +1,8 @@
+// Offset into Grammar::symbols
 #[derive(Clone, Copy, Eq, PartialEq)]
 struct SymbolIdx(usize);
 
+// Offset into Grammar::rules
 #[derive(Clone, Copy, Eq, PartialEq)]
 struct RuleIdx(usize);
 
@@ -9,16 +11,22 @@ pub struct GrammarBuilder {
     rules: Vec<RuleData>,
 }
 
+/// `Grammar` represents a context-free grammar.
+///
+/// It tracks a set of symbols and a set of production rules showing how those symbols interact.
 pub struct Grammar {
     symbols: Vec<SymbolData>,
     rules: Vec<RuleData>,
 }
 
+// Symbols should have a name.
+// Ideally, these should be a C-style identifier.
 struct SymbolData {
     name: String,
 }
 
-
+// A production rule takes a nonterminal symbol on the LHS
+// to a sequence of symbols (terminal and/or nonterminal) on the RHS
 struct RuleData {
     lhs: SymbolIdx,
     rhs: Vec<SymbolIdx>,
@@ -47,12 +55,14 @@ impl<'g> std::fmt::Debug for Rule<'g> {
     }
 }
 
+/// A `Symbol` is a handle to a symbol inside of a `Grammar`.
 #[derive(Clone, Copy)]
 pub struct Symbol<'g> {
     grammar: &'g Grammar,
     index: SymbolIdx,
 }
 
+/// A `Rule` is a handle to a rule inside of a `Grammar`.
 #[derive(Clone, Copy)]
 pub struct Rule<'g> {
     grammar: &'g Grammar,
@@ -88,18 +98,26 @@ impl<'g> std::hash::Hash for Rule<'g> {
 }
 
 impl<'g> Symbol<'g> {
+    /// The `Grammar` backing this symbol.
+    pub fn grammar(&self) -> &'g Grammar {
+        self.grammar
+    }
+
     fn data(&self) -> &SymbolData {
         &self.grammar.symbols[self.index.0]
     }
 
+    /// The name of the symbol.
     pub fn name(&self) -> String {
         self.data().name.clone()
     }
 
+    /// Is the symbol a terminal?
     pub fn is_terminal(&self) -> bool {
         !self.is_nonterminal()
     }
 
+    /// Is the symbol a nonterminal?
     pub fn is_nonterminal(&self) -> bool {
         for rule in self.grammar.rules() {
             if rule.lhs() == *self {
@@ -111,6 +129,7 @@ impl<'g> Symbol<'g> {
 }
 
 impl<'g> Rule<'g> {
+    /// The `Grammar` backing this rule.
     pub fn grammar(&self) -> &'g Grammar {
         self.grammar
     }
@@ -119,6 +138,7 @@ impl<'g> Rule<'g> {
         &self.grammar.rules[self.index.0]
     }
 
+    /// The symbol on the LHS.
     pub fn lhs(&self) -> Symbol<'g> {
         Symbol {
             grammar: self.grammar,
@@ -126,6 +146,7 @@ impl<'g> Rule<'g> {
         }
     }
 
+    /// The sequence of symbols on the RHS.
     pub fn rhs(&self) -> Vec<Symbol<'g>> {
         let mut result = vec![];
         for symbol in &self.data().rhs {
@@ -139,6 +160,7 @@ impl<'g> Rule<'g> {
 }
 
 impl Grammar {
+    /// A builder API for creating a Grammar object.
     pub fn new() -> GrammarBuilder {
         GrammarBuilder {
             symbols: vec![],
@@ -146,6 +168,7 @@ impl Grammar {
         }
     }
 
+    /// The set of symbols.
     pub fn symbols(&self) -> Vec<Symbol> {
         let mut result = vec![];
         for index in 0..self.symbols.len() {
@@ -157,6 +180,7 @@ impl Grammar {
         result
     }
 
+    /// The set of rules.
     pub fn rules(&self) -> Vec<Rule> {
         let mut result = vec![];
         for index in 0..self.rules.len() {
@@ -168,6 +192,7 @@ impl Grammar {
         result
     }
 
+    /// Fetch the symbol with the given name if it exists.
     pub fn symbol<S: AsRef<str>>(&self, name: S) -> Option<Symbol> {
         for (index, symbol) in self.symbols.iter().enumerate() {
             if symbol.name == name.as_ref() {
@@ -182,13 +207,17 @@ impl Grammar {
 }
 
 impl GrammarBuilder {
+    /// Declare a symbol.
     pub fn symbol<S: Into<String>>(mut self, name: S) -> Self {
+        let name: String = name.into();
+        assert!(!self.symbols.iter().any(|symbol_data| symbol_data.name == name), "Symbol declared twice: {name}");
         self.symbols.push(SymbolData {
-            name: name.into(),
+            name,
         });
         self
     }
 
+    /// Declare a rule for this grammar.
     pub fn rule<S: AsRef<str>>(mut self, lhs: S, rhs: &[S]) -> Self {
         let rhs: Vec<SymbolIdx> = rhs.iter().map(|symbol_name| self.symbol_index(symbol_name.as_ref())).collect();
 
@@ -199,6 +228,7 @@ impl GrammarBuilder {
         self
     }
 
+    /// Finish building this object and return the result as a `Grammar`.
     pub fn build(self) -> Grammar {
         Grammar {
             symbols: self.symbols,

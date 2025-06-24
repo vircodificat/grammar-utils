@@ -248,6 +248,30 @@ fn test_follow_nullable2() {
 }
 
 #[test]
+fn test_follow_nullable3() {
+    let grammar = Grammar::new()
+        .symbol("A")
+        .symbol("B")
+        .symbol("C")
+        .symbol("D")
+        .symbol("x")
+        .symbol("y")
+        .symbol("z")
+        .rule("A", &["B", "C", "D"])
+        .rule("B", &["x"])
+        .rule("C", &["y"])
+        .rule("D", &["z"])
+        .build();
+
+    let b = grammar.symbol("B").unwrap();
+    let y = grammar.symbol("y").unwrap();
+
+    let analysis = GrammarAnalysis::build(&grammar);
+
+    assert_eq!(analysis.follow(b), [y].iter().copied().collect());
+}
+
+#[test]
 fn test_first2() {
     let grammar = Grammar::new()
         .symbol("A")
