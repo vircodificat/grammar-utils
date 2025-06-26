@@ -75,6 +75,10 @@ impl<'g> GrammarAnalysis<'g> {
         self.first_follows.terminals_from(FFNode::Follow(symbol))
     }
 
+    pub fn can_end_with(&self, start_symbol: Symbol<'g>, symbol: Symbol<'g>) -> bool {
+        self.first_follows.follows_to_follow(start_symbol).contains(&symbol)
+    }
+
     fn calc_nullables(grammar: &'g Grammar) -> HashSet<Symbol<'g>> {
         let mut nullables = HashSet::new();
 
@@ -165,6 +169,8 @@ struct FirstFollows<'g> {
     // An adjacency list mapping `from_node` to `to_node`.
     // This indicates that the set represented by `from_node` contains the set represented by `to_node`
     edges: HashMap<FFNode<'g>, HashSet<FFNode<'g>>>,
+
+    rev_edges: HashMap<FFNode<'g>, HashSet<FFNode<'g>>>,
 }
 
 #[derive(Eq, PartialEq, Hash, Clone, Copy)]
@@ -181,6 +187,7 @@ impl<'g> FirstFollows<'g> {
     fn new() -> FirstFollows<'g> {
         FirstFollows {
             edges: HashMap::new(),
+            rev_edges: HashMap::new(),
         }
     }
 
@@ -190,8 +197,12 @@ impl<'g> FirstFollows<'g> {
         if !self.edges.contains_key(&from_node) {
             self.edges.insert(from_node, HashSet::new());
         }
-
         self.edges.get_mut(&from_node).unwrap().insert(to_node);
+
+        if !self.rev_edges.contains_key(&to_node) {
+            self.rev_edges.insert(to_node, HashSet::new());
+        }
+        self.rev_edges.get_mut(&to_node).unwrap().insert(from_node);
     }
 
     // Perform a breadth-first search of the graph starting from `from_node`
@@ -216,5 +227,29 @@ impl<'g> FirstFollows<'g> {
         }
 
         terminals
+    }
+
+    // Find all nonterminals where `FOLLOW(start_symbol)` can be reached from `FOLLOW(N)`.
+    fn follows_to_follow(&self, start_symbol: Symbol<'g>) -> HashSet<Symbol<'g>> {
+        let mut visited = HashSet::new();
+        let mut queue = vec![FFNode::Follow(start_symbol)];
+        let mut nonterminals = HashSet::new();
+
+        while let Some(node) = queue.pop() {
+            visited.insert(node);
+            if let FFNode::Follow(symbol) = node {
+                nonterminals.insert(symbol);
+            }
+
+            if self.rev_edges.contains_key(&node) {
+                for next_node in &self.rev_edges[&node] {
+                    if !visited.contains(next_node) {
+                        queue.push(*next_node);
+                    }
+                }
+            }
+        }
+
+        nonterminals
     }
 }

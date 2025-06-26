@@ -387,3 +387,38 @@ fn test_first_seq() {
     assert_eq!(analysis.first_seq(&[a, b]), vec![x, y].into_iter().collect());
     assert_eq!(analysis.first_seq(&[a, y]), vec![x, y].into_iter().collect());
 }
+
+#[test]
+fn test_can_end_with() {
+    let grammar = Grammar::new()
+        .symbol("A")
+        .symbol("B")
+        .symbol("C")
+        .symbol("x")
+        .symbol("y")
+        .rule("A", &["x"])
+        .rule("A", &[])
+        .rule("A", &["B"])
+        .rule("A", &["C", "B"])
+        .rule("B", &["y"])
+        .rule("C", &["x"])
+        .build();
+
+    let a = grammar.symbol("A").unwrap();
+    let b = grammar.symbol("B").unwrap();
+    let c = grammar.symbol("C").unwrap();
+
+    let analysis = GrammarAnalysis::build(&grammar);
+
+    assert!(analysis.can_end_with(a, a));
+    assert!(analysis.can_end_with(a, b));
+    assert!(!analysis.can_end_with(a, c));
+
+    assert!(!analysis.can_end_with(b, a));
+    assert!(analysis.can_end_with(b, b));
+    assert!(!analysis.can_end_with(b, c));
+
+    assert!(!analysis.can_end_with(c, a));
+    assert!(!analysis.can_end_with(c, b));
+    assert!(analysis.can_end_with(c, c));
+}
