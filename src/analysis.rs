@@ -31,6 +31,32 @@ impl<'g> GrammarAnalysis<'g> {
         self.nullables.clone()
     }
 
+    /// Returns whether the given symbol is nullable.
+    pub fn is_nullable(&self, symbol: Symbol<'g>) -> bool {
+        self.nullables.contains(&symbol)
+    }
+
+    pub fn first_seq(&self, seq: &[Symbol<'g>]) -> HashSet<Symbol<'g>> {
+        let mut result = HashSet::new();
+
+        for symbol in seq {
+            if symbol.is_terminal() {
+                result.insert(*symbol);
+                return result;
+            } else {
+                result.extend(self.first(*symbol));
+                if !self.is_nullable(*symbol) {
+                    return result;
+                }
+            }
+        }
+        result
+    }
+
+    pub fn is_nullable_seq(&self, seq: &[Symbol<'g>]) -> bool {
+        seq.iter().copied().all(|symbol| self.is_nullable(symbol))
+    }
+
     /// Returns the FIRST set for a nonterminal `Symbol`.
     ///
     /// The result is a set of terminals.

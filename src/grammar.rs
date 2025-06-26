@@ -1,10 +1,22 @@
 // Offset into Grammar::symbols
 #[derive(Clone, Copy, Eq, PartialEq)]
-struct SymbolIdx(usize);
+pub(crate) struct SymbolIdx(usize);
 
 // Offset into Grammar::rules
 #[derive(Clone, Copy, Eq, PartialEq)]
-struct RuleIdx(usize);
+pub(crate) struct RuleIdx(usize);
+
+impl From<SymbolIdx> for usize {
+    fn from(value: SymbolIdx) -> Self {
+        value.0
+    }
+}
+
+impl From<RuleIdx> for usize {
+    fn from(value: RuleIdx) -> Self {
+        value.0
+    }
+}
 
 pub struct GrammarBuilder {
     symbols: Vec<SymbolData>,
@@ -126,6 +138,10 @@ impl<'g> Symbol<'g> {
         }
         false
     }
+
+    pub(crate) fn index(&self) -> SymbolIdx {
+        self.index
+    }
 }
 
 impl<'g> Rule<'g> {
@@ -157,6 +173,10 @@ impl<'g> Rule<'g> {
         }
         result
     }
+
+    pub(crate) fn index(&self) -> RuleIdx {
+        self.index
+    }
 }
 
 impl Grammar {
@@ -176,6 +196,28 @@ impl Grammar {
                 grammar: self,
                 index: SymbolIdx(index),
             });
+        }
+        result
+    }
+
+    /// The set of terminal symbols.
+    pub fn terminals(&self) -> Vec<Symbol> {
+        let mut result = vec![];
+        for symbol in self.symbols() {
+            if symbol.is_terminal() {
+                result.push(symbol);
+            }
+        }
+        result
+    }
+
+    /// The set of nonterminal symbols.
+    pub fn nonterminals(&self) -> Vec<Symbol> {
+        let mut result = vec![];
+        for symbol in self.symbols() {
+            if symbol.is_nonterminal() {
+                result.push(symbol);
+            }
         }
         result
     }

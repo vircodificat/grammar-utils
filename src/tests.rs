@@ -334,3 +334,56 @@ fn test_is_terminal() {
     assert!(!a.is_terminal());
     assert!(x.is_terminal());
 }
+
+#[test]
+fn test_is_nullable_seq() {
+    let grammar = Grammar::new()
+        .symbol("A")
+        .symbol("B")
+        .symbol("x")
+        .rule("A", &["A", "x"])
+        .rule("A", &[])
+        .rule("B", &["A", "A", "A"])
+        .rule("B", &["x"])
+        .build();
+
+    let a = grammar.symbol("A").unwrap();
+    let b = grammar.symbol("B").unwrap();
+    let x = grammar.symbol("x").unwrap();
+
+    let analysis = GrammarAnalysis::build(&grammar);
+
+    assert!(analysis.is_nullable_seq(&[a, b]));
+    assert!(analysis.is_nullable_seq(&[]));
+    assert!(analysis.is_nullable_seq(&[a, a, a, a]));
+
+    assert!(!analysis.is_nullable_seq(&[x, b]));
+}
+
+#[test]
+fn test_first_seq() {
+    let grammar = Grammar::new()
+        .symbol("A")
+        .symbol("B")
+        .symbol("x")
+        .symbol("y")
+        .rule("A", &["A", "x"])
+        .rule("A", &[])
+        .rule("B", &["A", "A", "A"])
+        .rule("B", &["y"])
+        .build();
+
+    let a = grammar.symbol("A").unwrap();
+    let b = grammar.symbol("B").unwrap();
+    let x = grammar.symbol("x").unwrap();
+    let y = grammar.symbol("y").unwrap();
+
+    let analysis = GrammarAnalysis::build(&grammar);
+
+    assert_eq!(analysis.first_seq(&[]), vec![].into_iter().collect());
+    assert_eq!(analysis.first_seq(&[a]), analysis.first(a));
+    assert_eq!(analysis.first_seq(&[b]), analysis.first(b));
+
+    assert_eq!(analysis.first_seq(&[a, b]), vec![x, y].into_iter().collect());
+    assert_eq!(analysis.first_seq(&[a, y]), vec![x, y].into_iter().collect());
+}
