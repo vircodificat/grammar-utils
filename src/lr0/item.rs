@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use super::*;
+use crate::*;
 
 #[derive(Clone, Copy)]
 pub struct Item<'g> {
@@ -8,18 +8,16 @@ pub struct Item<'g> {
     pos: usize,
 }
 
-impl<'g> Rule<'g> {
-    pub fn item(&self, pos: usize) -> Item<'g> {
-        assert!(pos <= self.rhs().len());
+impl<'g> Item<'g> {
+    pub fn new(rule: Rule<'g>, pos: usize) -> Item<'g> {
+        assert!(pos <= rule.rhs().len());
 
         Item {
-            rule: *self,
+            rule,
             pos,
         }
     }
-}
 
-impl<'g> Item<'g> {
     pub fn rule(&self) -> Rule<'g> {
         self.rule
     }
@@ -50,7 +48,7 @@ impl<'g> Item<'g> {
 
     pub fn step(&self) -> Option<Item<'g>> {
         if self.pos() < self.rhs().len() {
-            Some(self.rule.item(self.pos + 1))
+            Some(Item::new(self.rule, self.pos + 1))
         } else {
             None
         }
@@ -175,17 +173,6 @@ impl<'g> ItemSet<'g> {
         self.items.clone()
     }
 
-    fn insert(&mut self, item: Item<'g>) -> bool {
-        for search_item in &self.items {
-            if search_item == &item {
-                return false;
-            }
-        }
-
-        self.items.push(item);
-        true
-    }
-
     pub(crate) fn closure(&self) -> ItemSet<'g> {
         let mut nonterms_added = HashSet::new();
         let mut itemset = self.items.clone();
@@ -208,7 +195,7 @@ impl<'g> ItemSet<'g> {
                                 });
 
                             for rule in symbol_rules {
-                                let item = rule.item(0);
+                                let item = Item::new(rule, 0);
                                 new_items.push(item);
                                 dirty = true;
                             }

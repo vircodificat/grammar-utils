@@ -50,7 +50,7 @@ impl<'g> ParseTable<'g> {
 
     fn build_states(grammar: &'g Grammar, start_rule: Rule<'g>) -> Vec<State<'g>> {
         let mut states = vec![];
-        let start_state = State::new(ItemSet::singleton(Item::new(start_rule, 0)));
+        let start_state = State::new(ItemSet::singleton(start_rule.item(0)));
         let mut states_remaining = vec![start_state];
 
         while let Some(state) = states_remaining.pop() {

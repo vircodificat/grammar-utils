@@ -1,14 +1,6 @@
-use std::iter::Peekable;
 use std::collections::HashMap;
 
 use crate::*;
-
-#[derive(Clone, Eq, PartialEq)]
-pub enum ParseTableEntry<'g> {
-    Empty,
-    Rule(Vec<Rule<'g>>),
-    Conflict(Vec<Rule<'g>>),
-}
 
 pub struct ParseTable<'g> {
     grammar: &'g Grammar,

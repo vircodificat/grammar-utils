@@ -138,10 +138,6 @@ impl<'g> Symbol<'g> {
         }
         false
     }
-
-    pub(crate) fn index(&self) -> SymbolIndex {
-        self.index
-    }
 }
 
 impl<'g> Rule<'g> {
@@ -172,10 +168,6 @@ impl<'g> Rule<'g> {
             });
         }
         result
-    }
-
-    pub(crate) fn index(&self) -> RuleIndex {
-        self.index
     }
 }
 
