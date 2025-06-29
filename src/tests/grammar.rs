@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
-use super::*;
-use super::analysis::GrammarAnalysis;
+use crate::*;
+use crate::analysis::GrammarAnalysis;
 
 #[test]
 fn test_grammar() {

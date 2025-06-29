@@ -1,4 +1,5 @@
-use std::{collections::HashMap, iter::Peekable};
+use std::iter::Peekable;
+use std::collections::HashMap;
 
 use super::*;
 
@@ -13,6 +14,13 @@ pub struct ParseTable<'g> {
     grammar: &'g Grammar,
     start_symbol: Symbol<'g>,
     table: HashMap<(Symbol<'g>, Option<Symbol<'g>>), Vec<Rule<'g>>>,
+}
+
+pub struct Machine<'g, I>
+    where I: Iterator<Item=Symbol<'g>> {
+    table: ParseTable<'g>,
+    stack: Vec<Symbol<'g>>,
+    input: Peekable<I>,
 }
 
 impl<'g> ParseTable<'g> {
@@ -95,13 +103,6 @@ impl<'g> std::fmt::Debug for ParseTable<'g> {
         }
         Ok(())
     }
-}
-
-pub struct Machine<'g, I>
-    where I: Iterator<Item=Symbol<'g>> {
-    table: ParseTable<'g>,
-    stack: Vec<Symbol<'g>>,
-    input: Peekable<I>,
 }
 
 impl<'g, I> Machine<'g, I> where I: Iterator<Item=Symbol<'g>> {
