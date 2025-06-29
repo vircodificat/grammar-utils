@@ -1,19 +1,19 @@
 // Offset into Grammar::symbols
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub(crate) struct SymbolIdx(usize);
+pub(crate) struct SymbolIndex(usize);
 
 // Offset into Grammar::rules
 #[derive(Clone, Copy, Eq, PartialEq)]
-pub(crate) struct RuleIdx(usize);
+pub(crate) struct RuleIndex(usize);
 
-impl From<SymbolIdx> for usize {
-    fn from(value: SymbolIdx) -> Self {
+impl From<SymbolIndex> for usize {
+    fn from(value: SymbolIndex) -> Self {
         value.0
     }
 }
 
-impl From<RuleIdx> for usize {
-    fn from(value: RuleIdx) -> Self {
+impl From<RuleIndex> for usize {
+    fn from(value: RuleIndex) -> Self {
         value.0
     }
 }
@@ -40,8 +40,8 @@ struct SymbolData {
 // A production rule takes a nonterminal symbol on the LHS
 // to a sequence of symbols (terminal and/or nonterminal) on the RHS
 struct RuleData {
-    lhs: SymbolIdx,
-    rhs: Vec<SymbolIdx>,
+    lhs: SymbolIndex,
+    rhs: Vec<SymbolIndex>,
 }
 
 impl std::fmt::Debug for Grammar {
@@ -71,14 +71,14 @@ impl<'g> std::fmt::Debug for Rule<'g> {
 #[derive(Clone, Copy)]
 pub struct Symbol<'g> {
     grammar: &'g Grammar,
-    index: SymbolIdx,
+    index: SymbolIndex,
 }
 
 /// A `Rule` is a handle to a rule inside of a `Grammar`.
 #[derive(Clone, Copy)]
 pub struct Rule<'g> {
     grammar: &'g Grammar,
-    index: RuleIdx,
+    index: RuleIndex,
 }
 
 impl<'g> PartialEq for Symbol<'g> {
@@ -139,7 +139,7 @@ impl<'g> Symbol<'g> {
         false
     }
 
-    pub(crate) fn index(&self) -> SymbolIdx {
+    pub(crate) fn index(&self) -> SymbolIndex {
         self.index
     }
 }
@@ -174,7 +174,7 @@ impl<'g> Rule<'g> {
         result
     }
 
-    pub(crate) fn index(&self) -> RuleIdx {
+    pub(crate) fn index(&self) -> RuleIndex {
         self.index
     }
 }
@@ -194,7 +194,7 @@ impl Grammar {
         for index in 0..self.symbols.len() {
             result.push(Symbol {
                 grammar: self,
-                index: SymbolIdx(index),
+                index: SymbolIndex(index),
             });
         }
         result
@@ -228,7 +228,7 @@ impl Grammar {
         for index in 0..self.rules.len() {
             result.push(Rule {
                 grammar: self,
-                index: RuleIdx(index),
+                index: RuleIndex(index),
             });
         }
         result
@@ -240,7 +240,7 @@ impl Grammar {
             if symbol.name == name.as_ref() {
                 return Some(Symbol {
                     grammar: self,
-                    index: SymbolIdx(index),
+                    index: SymbolIndex(index),
                 });
             }
         }
@@ -261,7 +261,7 @@ impl GrammarBuilder {
 
     /// Declare a rule for this grammar.
     pub fn rule<S: AsRef<str>>(mut self, lhs: S, rhs: &[S]) -> Self {
-        let rhs: Vec<SymbolIdx> = rhs.iter().map(|symbol_name| self.symbol_index(symbol_name.as_ref())).collect();
+        let rhs: Vec<SymbolIndex> = rhs.iter().map(|symbol_name| self.symbol_index(symbol_name.as_ref())).collect();
 
         self.rules.push(RuleData {
             lhs: self.symbol_index(lhs.as_ref()),
@@ -278,10 +278,10 @@ impl GrammarBuilder {
         }
     }
 
-    fn symbol_index(&self, symbol_name: &str) -> SymbolIdx {
+    fn symbol_index(&self, symbol_name: &str) -> SymbolIndex {
         for (i, symbol) in self.symbols.iter().enumerate() {
             if symbol.name == symbol_name {
-                return SymbolIdx(i);
+                return SymbolIndex(i);
             }
         }
         panic!("No such symbol: {symbol_name}")
