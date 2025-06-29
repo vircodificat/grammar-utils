@@ -424,7 +424,7 @@ fn test_can_end_with() {
 }
 
 #[test]
-fn ll1_example() {
+fn ll1_example1() {
     let grammar = Grammar::new()
         .symbol("*")
         .symbol("+")

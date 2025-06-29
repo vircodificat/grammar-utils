@@ -130,10 +130,21 @@ fn step_item() {
     assert!(item.step().is_none());
 }
 
+#[derive(Debug)]
+#[derive(Clone)]
 pub struct ItemSet<'g> {
     grammar: &'g Grammar,
     items: Vec<Item<'g>>,
 }
+
+impl<'g> PartialEq for ItemSet<'g> {
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self.grammar, other.grammar) && self.items == other.items
+    }
+}
+
+impl<'g> Eq for ItemSet<'g> {}
+
 
 impl<'g> ItemSet<'g> {
     pub fn grammar(&self) -> &'g Grammar {
@@ -149,10 +160,11 @@ impl<'g> ItemSet<'g> {
 
     pub fn singleton(item: Item<'g>) -> Self {
         let grammar: &'g Grammar = item.grammar();
-        ItemSet {
+        let itemset = ItemSet {
             grammar,
             items: vec![item],
-        }
+        };
+        itemset.closure()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -174,21 +186,27 @@ impl<'g> ItemSet<'g> {
         true
     }
 
-    pub fn closure(&self) -> ItemSet<'g> {
+    pub(crate) fn closure(&self) -> ItemSet<'g> {
         let mut nonterms_added = HashSet::new();
-        let mut items = self.items.clone();
+        let mut itemset = self.items.clone();
 
         loop {
             let mut dirty = false;
             let mut new_items = vec![];
 
-            for item in &items {
+            for item in &itemset {
                 if let Some(symbol) = item.next_symbol() {
                     if symbol.is_nonterminal() {
                         if !nonterms_added.contains(&symbol) {
                             nonterms_added.insert(symbol);
 
-                            let symbol_rules = self.grammar.rules().into_iter().filter(|rule| rule.lhs() == symbol);
+                            let symbol_rules = self.grammar
+                                .rules()
+                                .into_iter()
+                                .filter(|rule| {
+                                    rule.lhs() == symbol
+                                });
+
                             for rule in symbol_rules {
                                 let item = rule.item(0);
                                 new_items.push(item);
@@ -201,8 +219,8 @@ impl<'g> ItemSet<'g> {
             }
 
             for item in new_items {
-                if !items.contains(&item) {
-                    items.push(item);
+                if !itemset.contains(&item) {
+                    itemset.push(item);
                 }
             }
 
@@ -213,7 +231,7 @@ impl<'g> ItemSet<'g> {
 
         ItemSet {
             grammar: self.grammar,
-            items,
+            items: itemset,
         }
     }
 
