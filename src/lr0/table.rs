@@ -33,7 +33,7 @@ impl<'g> std::fmt::Debug for State<'g> {
 }
 
 impl<'g> ParseTable<'g> {
-    pub fn new(grammar: &'g Grammar, start_rule: Rule<'g>) -> ParseTable<'g> {
+    pub fn build(grammar: &'g Grammar, start_rule: Rule<'g>) -> ParseTable<'g> {
         let states = Self::build_states(&grammar, start_rule);
         let actions = Self::build_actions(&grammar, &states, start_rule);
 

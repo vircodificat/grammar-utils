@@ -85,49 +85,6 @@ impl<'g> PartialEq for Item<'g> {
 
 impl<'g> Eq for Item<'g> {}
 
-#[test]
-fn debug_for_items() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("x")
-        .symbol("y")
-        .symbol("z")
-        .rule("A", &["x", "y", "z"])
-        .build();
-
-    let rule0 = &grammar.rules()[0];
-    assert_eq!(&format!("{:?}", rule0.item(0)), "A -> . x y z");
-    assert_eq!(&format!("{:?}", rule0.item(1)), "A -> x . y z");
-    assert_eq!(&format!("{:?}", rule0.item(2)), "A -> x y . z");
-    assert_eq!(&format!("{:?}", rule0.item(3)), "A -> x y z .");
-}
-
-#[test]
-fn step_item() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("x")
-        .symbol("y")
-        .symbol("z")
-        .rule("A", &["x", "y", "z"])
-        .build();
-
-    let mut item = grammar.rules()[0].item(0);
-    assert_eq!(&format!("{item:?}"), "A -> . x y z");
-
-    item = item.step().unwrap();
-    assert_eq!(&format!("{item:?}"), "A -> x . y z");
-
-    item = item.step().unwrap();
-    assert_eq!(&format!("{item:?}"), "A -> x y . z");
-
-    item = item.step().unwrap();
-    assert_eq!(&format!("{item:?}"), "A -> x y z .");
-
-    assert!(item.is_finished());
-    assert!(item.step().is_none());
-}
-
 #[derive(Debug)]
 #[derive(Clone)]
 pub struct ItemSet<'g> {

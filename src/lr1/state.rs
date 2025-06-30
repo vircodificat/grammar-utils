@@ -26,3 +26,13 @@ impl From<StateIndex> for usize {
         value.0
     }
 }
+
+impl<'g> std::fmt::Debug for State<'g> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "State")?;
+        for item in &self.itemset.items {
+            writeln!(f, "{item:?}")?;
+        }
+        Ok(())
+    }
+}

@@ -26,16 +26,11 @@ pub struct Conflict<'g, 't> {
     actions: Vec<Action<'g>>,
 }
 
-impl<'g> std::fmt::Debug for State<'g> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", &self.itemset().items())
-    }
-}
-
 impl<'g> ParseTable<'g> {
-    pub fn new(grammar: &'g Grammar, start_rule: Rule<'g>) -> ParseTable<'g> {
-        let states = Self::build_states(&grammar, start_rule);
-        let actions = Self::build_actions(&grammar, &states, start_rule);
+    pub fn build(grammar: &'g Grammar, start_rule: Rule<'g>) -> ParseTable<'g> {
+        let analysis = GrammarAnalysis::build(grammar);
+        let states = Self::build_states(&grammar, &analysis, start_rule);
+        let actions = Self::build_actions(&grammar, &analysis, &states, start_rule);
 
         ParseTable {
             grammar,
@@ -48,14 +43,18 @@ impl<'g> ParseTable<'g> {
         self.grammar
     }
 
-    fn build_states(grammar: &'g Grammar, start_rule: Rule<'g>) -> Vec<State<'g>> {
+    fn build_states(
+        grammar: &'g Grammar,
+        analysis: &GrammarAnalysis<'g>,
+        start_rule: Rule<'g>,
+    ) -> Vec<State<'g>> {
         let mut states = vec![];
-        let start_state = State::new(ItemSet::singleton(start_rule.item(0)));
+        let start_state = State::new(ItemSet::singleton(Item::new(start_rule, 0, vec![None].into_iter().collect()), analysis));
         let mut states_remaining = vec![start_state];
 
         while let Some(state) = states_remaining.pop() {
             for symbol in grammar.symbols() {
-                let next_state = State::new(state.itemset().follow(symbol));
+                let next_state = State::new(state.itemset().follow(analysis, symbol));
 
                 if next_state.itemset().is_empty() {
                     continue;
@@ -74,6 +73,7 @@ impl<'g> ParseTable<'g> {
 
     fn build_actions(
         grammar: &'g Grammar,
+        analysis: &GrammarAnalysis<'g>,
         states: &[State<'g>],
         start_rule: Rule<'g>,
     ) -> HashMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>> {
@@ -95,7 +95,7 @@ impl<'g> ParseTable<'g> {
             for src_item in src_state.itemset().items() {
                 match src_item.next_symbol() {
                     Some(symbol) => {
-                        let dst_state = src_state.itemset().follow(symbol);
+                        let dst_state = src_state.itemset().follow(&analysis, symbol);
                         let dst_state_index = Self::state_index(&dst_state, states);
                         let key = (src_state_index, Some(symbol));
                         let actions_for = actions.get_mut(&key).unwrap();
@@ -107,15 +107,11 @@ impl<'g> ParseTable<'g> {
 
                     }
                     None => {
-                        for symbol in grammar.symbols() {
-                            let key = (src_state_index, Some(symbol));
+                        for symbol in src_item.lookahead() {
+                            let key = (src_state_index, *symbol);
                             let actions_for = actions.get_mut(&key).unwrap();
                             actions_for.push(Action::Reduce(src_item.rule()));
                         }
-
-                        let key = (src_state_index, None);
-                        let actions_for = actions.get_mut(&key).unwrap();
-                        actions_for.push(Action::Reduce(src_item.rule()));
                     }
                 }
             }
@@ -159,6 +155,25 @@ impl<'g> ParseTable<'g> {
             }
         }
         conflicts
+    }
+
+    pub fn get(&self, state_index: StateIndex, symbol: Option<Symbol<'g>>) -> Vec<Action<'g>> {
+        let key = (state_index, symbol);
+        self.actions.get(&key).unwrap().to_vec()
+    }
+
+    pub fn dump(&self) {
+        for (state_index, state) in self.states.iter().enumerate() {
+            let state_index = StateIndex(state_index);
+            eprintln!("{state_index:?}");
+            eprintln!("{state:?}");
+
+            for symbol in self.grammar.symbols() {
+                eprintln!("    {symbol:?} => {:?}", self.get(state_index, Some(symbol)));
+            }
+            eprintln!("    None => {:?}", self.get(state_index, None));
+            eprintln!();
+        }
     }
 }
 
