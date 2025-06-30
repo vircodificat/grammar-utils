@@ -124,7 +124,8 @@ fn debug_for_items2() {
     */
 
     let table = crate::lr1::ParseTable::build(&grammar, rule0);
-    dbg!(&table);
+    assert_eq!(table.conflicts().len(), 0);
+    assert_eq!(table.states.len(), 9);
 }
 
 #[test]
