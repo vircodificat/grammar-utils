@@ -1,4 +1,5 @@
 use crate::*;
+use crate::lr0::*;
 
 #[test]
 fn test_conflicts() {
@@ -23,7 +24,7 @@ fn test_conflicts() {
         .rule("F", &["(", "E", ")"])
         .build();
 
-    let table = ParseTable::new(&grammar, grammar.rules()[0]);
+    let table = ParseTable::build(&grammar, grammar.rules()[0]);
     dbg!(&table.states.len());
     dbg!(table.conflicts());
     for conflict in table.conflicts() {
@@ -31,6 +32,7 @@ fn test_conflicts() {
         eprintln!("{:?}", conflict.state());
         eprintln!();
     }
+    assert_eq!(table.conflicts().len(), 3);
 }
 
 #[test]
@@ -48,7 +50,7 @@ fn test_machine() {
         .rule("A", &["b"])
         .build();
 
-    let table = ParseTable::new(&grammar, grammar.rules()[0]);
+    let table = ParseTable::build(&grammar, grammar.rules()[0]);
     dbg!(&table.states.len());
 
     eprintln!("STATES:");
@@ -65,4 +67,47 @@ fn test_machine() {
         grammar.symbol("b").unwrap(),
     ].into_iter();
     machine.run(&mut input);
+}
+
+#[test]
+fn debug_for_items() {
+    let grammar = Grammar::new()
+        .symbol("A")
+        .symbol("x")
+        .symbol("y")
+        .symbol("z")
+        .rule("A", &["x", "y", "z"])
+        .build();
+
+    let rule0 = grammar.rules()[0];
+    assert_eq!(&format!("{:?}", Item::new(rule0, 0)), "A -> . x y z");
+    assert_eq!(&format!("{:?}", Item::new(rule0, 1)), "A -> x . y z");
+    assert_eq!(&format!("{:?}", Item::new(rule0, 2)), "A -> x y . z");
+    assert_eq!(&format!("{:?}", Item::new(rule0, 3)), "A -> x y z .");
+}
+
+#[test]
+fn step_item() {
+    let grammar = Grammar::new()
+        .symbol("A")
+        .symbol("x")
+        .symbol("y")
+        .symbol("z")
+        .rule("A", &["x", "y", "z"])
+        .build();
+
+    let mut item = Item::new(grammar.rules()[0], 0);
+    assert_eq!(&format!("{item:?}"), "A -> . x y z");
+
+    item = item.step().unwrap();
+    assert_eq!(&format!("{item:?}"), "A -> x . y z");
+
+    item = item.step().unwrap();
+    assert_eq!(&format!("{item:?}"), "A -> x y . z");
+
+    item = item.step().unwrap();
+    assert_eq!(&format!("{item:?}"), "A -> x y z .");
+
+    assert!(item.is_finished());
+    assert!(item.step().is_none());
 }

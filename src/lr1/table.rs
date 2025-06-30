@@ -107,8 +107,8 @@ impl<'g> ParseTable<'g> {
 
                     }
                     None => {
-                        for symbol in grammar.symbols() {
-                            let key = (src_state_index, Some(symbol));
+                        for symbol in src_item.lookahead() {
+                            let key = (src_state_index, *symbol);
                             let actions_for = actions.get_mut(&key).unwrap();
                             actions_for.push(Action::Reduce(src_item.rule()));
                         }
