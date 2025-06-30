@@ -88,7 +88,7 @@ impl<'g> std::fmt::Debug for Item<'g> {
             write!(f,  " {:?}", &rhs[i])?;
         }
 
-        write!(f, " {{")?;
+        write!(f, " {{ ")?;
         for symbol in &self.lookahead {
             write!(f, "{symbol:?} ")?;
         }
@@ -99,7 +99,7 @@ impl<'g> std::fmt::Debug for Item<'g> {
 
 impl<'g> PartialEq for Item<'g> {
     fn eq(&self, other: &Self) -> bool {
-        self.rule() == other.rule() && self.pos == other.pos
+        self.rule() == other.rule() && self.pos == other.pos && self.lookahead == other.lookahead
     }
 }
 
@@ -159,34 +159,40 @@ impl<'g> ItemSet<'g> {
     }
 
     pub(crate) fn closure(&self, analysis: &GrammarAnalysis<'g>) -> ItemSet<'g> {
-        let mut nonterms_added = HashSet::new();
+        eprintln!("Closure of {self:?}");
         let mut itemset = self.items.clone();
 
         loop {
+            eprintln!("LOOP ITERATION");
             let mut dirty = false;
             let mut new_items = vec![];
 
             for item in &itemset {
-                if let Some(symbol) = item.next_symbol() {
-                    let lookahead = if let Some(symbol) = item.next_next_symbol() {
-                        analysis.first(symbol).into_iter().map(|symbol| Some(symbol)).collect()
+                eprintln!("  Looking at {item:?}. Next symbol = {:?}", item.next_symbol());
+                if let Some(next_symbol) = item.next_symbol() {
+                    let lookahead = if let Some(next_next_symbol) = item.next_next_symbol() {
+                        if next_next_symbol.is_nonterminal() {
+                            analysis.first(next_next_symbol).into_iter().map(|symbol| Some(symbol)).collect()
+                        } else {
+                            [Some(next_next_symbol)].into_iter().collect()
+                        }
                     } else {
                         item.lookahead.clone()
                     };
-                    if symbol.is_nonterminal() {
-                        if !nonterms_added.contains(&symbol) {
-                            nonterms_added.insert(symbol);
+                    eprintln!("  Lookahead = {lookahead:?}");
 
-                            let symbol_rules = self.grammar
-                                .rules()
-                                .into_iter()
-                                .filter(|rule| {
-                                    rule.lhs() == symbol
-                                });
+                    if next_symbol.is_nonterminal() {
+                        let symbol_rules = self.grammar
+                            .rules()
+                            .into_iter()
+                            .filter(|rule| {
+                                rule.lhs() == next_symbol
+                            });
 
-                            for rule in symbol_rules {
-                                //let lookahead: HashSet<Option<Symbol>> = [None].into_iter().collect();
-                                let item = Item::new(rule, 0, lookahead.clone());
+                        for rule in symbol_rules {
+                            let item = Item::new(rule, 0, lookahead.clone());
+                            if !itemset.contains(&item) {
+                                eprintln!("  Adding {item:?}");
                                 new_items.push(item);
                                 dirty = true;
                             }
@@ -205,8 +211,10 @@ impl<'g> ItemSet<'g> {
             if !dirty {
                 break;
             }
+            eprintln!();
         }
 
+        eprintln!("DONE");
         ItemSet {
             grammar: self.grammar,
             items: itemset,

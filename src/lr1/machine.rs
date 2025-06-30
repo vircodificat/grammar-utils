@@ -61,25 +61,30 @@ impl<'g, 't> Machine<'g, 't> {
 
             match action {
                 Action::Shift(dst_state_index) => {
-                                self.stack.push((dst_state_index, symbol.unwrap()));
-                            }
+                    self.stack.push((dst_state_index, symbol.unwrap()));
+                }
                 Action::Reduce(rule) => {
-                                self.head.insert(0, rule.lhs());
+                    self.head.insert(0, rule.lhs());
 
-                                if let Some(symbol) = symbol {
-                                    self.head.insert(0, symbol);
-                                }
+                    if let Some(symbol) = symbol {
+                        self.head.insert(0, symbol);
+                    }
 
-                                let mut children = vec![];
+                    let mut children = vec![];
 
-                                for _ in 0..rule.rhs().len() {
-                                    let Some((_state, sym)) = self.stack.pop() else { panic!() };
-                                    children.insert(0, sym);
-                                }
-                            }
+                    for _ in 0..rule.rhs().len() {
+                        let Some((_state, sym)) = self.stack.pop() else { panic!() };
+                        children.insert(0, sym);
+                    }
+                }
                 Action::Halt => {
                     self.halted = true;
                 }
+            }
+
+            {
+                eprintln!("ACTION:  {action:?}");
+                eprintln!();
             }
         }
     }

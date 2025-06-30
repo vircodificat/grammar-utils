@@ -112,10 +112,6 @@ impl<'g> ParseTable<'g> {
                             let actions_for = actions.get_mut(&key).unwrap();
                             actions_for.push(Action::Reduce(src_item.rule()));
                         }
-
-                        let key = (src_state_index, None);
-                        let actions_for = actions.get_mut(&key).unwrap();
-                        actions_for.push(Action::Reduce(src_item.rule()));
                     }
                 }
             }
@@ -159,6 +155,25 @@ impl<'g> ParseTable<'g> {
             }
         }
         conflicts
+    }
+
+    pub fn get(&self, state_index: StateIndex, symbol: Option<Symbol<'g>>) -> Vec<Action<'g>> {
+        let key = (state_index, symbol);
+        self.actions.get(&key).unwrap().to_vec()
+    }
+
+    pub fn dump(&self) {
+        for (state_index, state) in self.states.iter().enumerate() {
+            let state_index = StateIndex(state_index);
+            eprintln!("{state_index:?}");
+            eprintln!("{state:?}");
+
+            for symbol in self.grammar.symbols() {
+                eprintln!("    {symbol:?} => {:?}", self.get(state_index, Some(symbol)));
+            }
+            eprintln!("    None => {:?}", self.get(state_index, None));
+            eprintln!();
+        }
     }
 }
 
