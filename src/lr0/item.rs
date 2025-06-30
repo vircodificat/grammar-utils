@@ -95,11 +95,11 @@ fn debug_for_items() {
         .rule("A", &["x", "y", "z"])
         .build();
 
-    let rule0 = &grammar.rules()[0];
-    assert_eq!(&format!("{:?}", rule0.item(0)), "A -> . x y z");
-    assert_eq!(&format!("{:?}", rule0.item(1)), "A -> x . y z");
-    assert_eq!(&format!("{:?}", rule0.item(2)), "A -> x y . z");
-    assert_eq!(&format!("{:?}", rule0.item(3)), "A -> x y z .");
+    let rule0 = grammar.rules()[0];
+    assert_eq!(&format!("{:?}", Item::new(rule0, 0)), "A -> . x y z");
+    assert_eq!(&format!("{:?}", Item::new(rule0, 1)), "A -> x . y z");
+    assert_eq!(&format!("{:?}", Item::new(rule0, 2)), "A -> x y . z");
+    assert_eq!(&format!("{:?}", Item::new(rule0, 3)), "A -> x y z .");
 }
 
 #[test]
@@ -112,7 +112,7 @@ fn step_item() {
         .rule("A", &["x", "y", "z"])
         .build();
 
-    let mut item = grammar.rules()[0].item(0);
+    let mut item = Item::new(grammar.rules()[0], 0);
     assert_eq!(&format!("{item:?}"), "A -> . x y z");
 
     item = item.step().unwrap();
