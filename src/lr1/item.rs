@@ -56,10 +56,9 @@ impl<'g> Item<'g> {
         }
     }
 
-    pub fn step(&self, analysis: &GrammarAnalysis<'g>) -> Option<Item<'g>> {
+    pub fn step(&self) -> Option<Item<'g>> {
         if self.pos() < self.rhs().len() {
-            let item: Item<'g> = Item::new(self.rule, self.pos + 1, self.lookahead.clone());
-            Some(item)
+            Some(Item::new(self.rule, self.pos + 1, self.lookahead.clone()))
         } else {
             None
         }
@@ -291,7 +290,7 @@ impl<'g> ItemSet<'g> {
         for item in &self.items {
             if let Some(next_symbol) = item.next_symbol() {
                 if next_symbol == symbol {
-                    items.push(item.step(analysis).unwrap());
+                    items.push(item.step().unwrap());
                 }
             }
         }
