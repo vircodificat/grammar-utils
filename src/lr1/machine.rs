@@ -39,53 +39,49 @@ impl<'g, 't> Machine<'g, 't> {
             eprintln!("STATE:  {:?}", state);
             eprintln!();
 
-            let state = &self.parse_table.states[usize::from(state)];
-            for item in state.itemset().items() {
+            let state = &self.parse_table[state];
+            for item in state.items() {
                 eprintln!("    {item:?}");
             }
             eprintln!();
         }
 
+        let actions = &self.parse_table.get(state, symbol);
 
-        let key = (state, symbol);
-        let actions = &self.parse_table.actions.get(&key);
+        let action = if actions.len() == 0 {
+            panic!("Machine halted unexpectedly")
+        } else if actions.len() == 1 {
+            actions[0]
+        } else {
+            panic!("Multiple actions: {actions:?}")
+        };
 
-        if let Some(actions) = actions {
-            let action = if actions.len() == 0 {
-                panic!("Machine halted unexpectedly")
-            } else if actions.len() == 1 {
-                actions[0]
-            } else {
-                panic!("Multiple actions: {actions:?}")
-            };
+        match action {
+            Action::Shift(dst_state_index) => {
+                self.stack.push((dst_state_index, symbol.unwrap()));
+            }
+            Action::Reduce(rule) => {
+                self.head.insert(0, rule.lhs());
 
-            match action {
-                Action::Shift(dst_state_index) => {
-                    self.stack.push((dst_state_index, symbol.unwrap()));
+                if let Some(symbol) = symbol {
+                    self.head.insert(0, symbol);
                 }
-                Action::Reduce(rule) => {
-                    self.head.insert(0, rule.lhs());
 
-                    if let Some(symbol) = symbol {
-                        self.head.insert(0, symbol);
-                    }
+                let mut children = vec![];
 
-                    let mut children = vec![];
-
-                    for _ in 0..rule.rhs().len() {
-                        let Some((_state, sym)) = self.stack.pop() else { panic!() };
-                        children.insert(0, sym);
-                    }
-                }
-                Action::Halt => {
-                    self.halted = true;
+                for _ in 0..rule.rhs().len() {
+                    let Some((_state, sym)) = self.stack.pop() else { panic!() };
+                    children.insert(0, sym);
                 }
             }
-
-            {
-                eprintln!("ACTION:  {action:?}");
-                eprintln!();
+            Action::Halt => {
+                self.halted = true;
             }
+        }
+
+        {
+            eprintln!("ACTION:  {action:?}");
+            eprintln!();
         }
     }
 

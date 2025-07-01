@@ -6,4 +6,4 @@ mod item;
 pub use state::{State, StateIndex};
 pub use table::{ParseTable, Action, Conflict};
 pub use machine::Machine;
-pub use item::{Item, ItemSet};
+pub use item::Item;

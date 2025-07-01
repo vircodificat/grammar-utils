@@ -3,21 +3,40 @@ use std::collections::HashMap;
 use crate::*;
 use super::*;
 
+/// An LR(1) parse table.
 #[derive(Debug)]
 pub struct ParseTable<'g> {
     grammar: &'g Grammar,
-    pub(crate) states: Vec<State<'g>>,
-    pub(crate) actions: HashMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>>,
+    states: Vec<State<'g>>,
+    actions: HashMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>>,
 }
 
+/// An LR action.
 #[derive(Debug)]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Action<'g> {
+    /// Shift the next symbol from the input stream onto the stack.
+    /// Then enter the give state.
+    ///
+    /// `Shift` is also used to represent a GOTO transition.
     Shift(StateIndex),
+
+    /// Use the given rule to reduce.
+    /// This pops elements off the stack equal to the number of symbols on the right hand side.
+    /// These become the children of the parse tree with the left hand side being the root.
+    ///
+    /// Conceptually, this pushes the nonterminal back into the input stream.
+    /// This will always be followed by applying a `Shift` action
+    /// to remove the nonterminal that was just generated off of input stream
+    /// and back onto the stack.
     Reduce(Rule<'g>),
+
+    /// The machine successfully consumed the start rule.
+    /// If there is no more input remaining, the parse was successful.
     Halt,
 }
 
+/// Information on a conflict found in the given grammar.
 #[derive(Clone)]
 pub struct Conflict<'g, 't> {
     table: &'t ParseTable<'g>,
@@ -49,14 +68,14 @@ impl<'g> ParseTable<'g> {
         start_rule: Rule<'g>,
     ) -> Vec<State<'g>> {
         let mut states = vec![];
-        let start_state = State::new(ItemSet::singleton(Item::new(start_rule, 0, vec![None].into_iter().collect()), analysis));
+        let start_state = State::singleton(Item::new(start_rule, 0, vec![None].into_iter().collect()), analysis);
         let mut states_remaining = vec![start_state];
 
         while let Some(state) = states_remaining.pop() {
             for symbol in grammar.symbols() {
-                let next_state = State::new(state.itemset().follow(analysis, symbol));
+                let next_state = state.follow(analysis, symbol);
 
-                if next_state.itemset().is_empty() {
+                if next_state.items().is_empty() {
                     continue;
                 }
 
@@ -92,10 +111,10 @@ impl<'g> ParseTable<'g> {
 
         for (src_state_index, src_state) in states.iter().enumerate() {
             let src_state_index = StateIndex(src_state_index);
-            for src_item in src_state.itemset().items() {
+            for src_item in src_state.items() {
                 match src_item.next_symbol() {
                     Some(symbol) => {
-                        let dst_state = src_state.itemset().follow(&analysis, symbol);
+                        let dst_state = src_state.follow(&analysis, symbol);
                         let dst_state_index = Self::state_index(&dst_state, states);
                         let key = (src_state_index, Some(symbol));
                         let actions_for = actions.get_mut(&key).unwrap();
@@ -123,12 +142,12 @@ impl<'g> ParseTable<'g> {
         actions
     }
 
-    fn state_index(itemset: &ItemSet, itemsets: &[State]) -> usize {
-        itemsets
+    fn state_index(state: &State, states: &[State]) -> usize {
+        states
             .iter()
             .enumerate()
             .find_map(|(j, st)| {
-                if itemset == st.itemset() {
+                if state == st {
                     Some(j)
                 } else {
                     None
@@ -202,5 +221,13 @@ impl<'g, 't> Conflict<'g, 't> {
 
     pub fn actions(&self) -> &[Action<'g>] {
         &self.actions
+    }
+}
+
+impl<'g> std::ops::Index<StateIndex> for ParseTable<'g> {
+    type Output = State<'g>;
+
+    fn index(&self, index: StateIndex) -> &Self::Output {
+        &self.states[usize::from(index)]
     }
 }
