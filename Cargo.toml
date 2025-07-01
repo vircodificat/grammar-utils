@@ -2,5 +2,10 @@
 name = "grammar-utils"
 version = "0.1.0"
 edition = "2024"
+license = "MIT"
+description = "A library for working with context-free grammars."
+homepage = "https://github.com/vircodificat/grammar-utils"
+repository = "https://github.com/vircodificat/grammar-utils"
+readme = "README.md"
 
 [dependencies]
