@@ -25,7 +25,7 @@ fn test_conflicts() {
         .build();
 
     let table = ParseTable::build(&grammar, grammar.rules()[0]);
-    dbg!(&table.states.len());
+    dbg!(&table.states().len());
     dbg!(table.conflicts());
     for conflict in table.conflicts() {
         eprintln!("{conflict:?}");
@@ -60,7 +60,6 @@ fn test_machine() {
 
     let table = ParseTable::build(&grammar, grammar.rules()[0]);
     table.dump();
-    let mut machine = Machine::new(&table);
     let mut input = [
         grammar.symbol("id").unwrap(),
         grammar.symbol("+").unwrap(),
@@ -72,7 +71,8 @@ fn test_machine() {
         grammar.symbol("id").unwrap(),
         grammar.symbol(")").unwrap(),
     ].into_iter();
-    machine.run(&mut input);
+    let mut machine = Machine::new(&table, &mut input);
+    machine.run();
 }
 
 #[test]

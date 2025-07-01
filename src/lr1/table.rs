@@ -62,6 +62,10 @@ impl<'g> ParseTable<'g> {
         self.grammar
     }
 
+    pub fn states(&self) -> &[State<'g>] {
+        &self.states
+    }
+
     fn build_states(
         grammar: &'g Grammar,
         analysis: &GrammarAnalysis<'g>,

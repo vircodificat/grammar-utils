@@ -1,19 +1,23 @@
+use std::iter::Peekable;
+
 use crate::*;
 use super::*;
 
-pub struct Machine<'g, 't> {
+pub struct Machine<'g, 't, I>
+where I: Iterator<Item=Symbol<'g>> {
+    input: Peekable<I>,
     parse_table: &'t ParseTable<'g>,
-    head: Vec<Symbol<'g>>,
     stack: Vec<(StateIndex, Symbol<'g>)>,
     halted: bool,
     step: usize,
 }
 
-impl<'g, 't> Machine<'g, 't> {
-    pub fn new(parse_table: &'t ParseTable<'g>) -> Machine<'g, 't> {
+impl<'g, 't, I> Machine<'g, 't, I>
+where I: Iterator<Item=Symbol<'g>> {
+    pub fn new(parse_table: &'t ParseTable<'g>, input: I) -> Machine<'g, 't, I> {
         Machine {
+            input: input.peekable(),
             parse_table,
-            head: vec![],
             stack: vec![],
             halted: false,
             step: 0,
@@ -29,7 +33,8 @@ impl<'g, 't> Machine<'g, 't> {
             .unwrap_or(StateIndex(0))
     }
 
-    fn step(&mut self, symbol: Option<Symbol<'g>>) {
+    fn step(&mut self) {
+        let symbol = self.input.peek().copied();
         let state = self.state();
 
         {
@@ -58,21 +63,36 @@ impl<'g, 't> Machine<'g, 't> {
 
         match action {
             Action::Shift(dst_state_index) => {
+                self.input.next();
                 self.stack.push((dst_state_index, symbol.unwrap()));
             }
             Action::Reduce(rule) => {
-                self.head.insert(0, rule.lhs());
-
-                if let Some(symbol) = symbol {
-                    self.head.insert(0, symbol);
-                }
-
                 let mut children = vec![];
 
                 for _ in 0..rule.rhs().len() {
                     let Some((_state, sym)) = self.stack.pop() else { panic!() };
                     children.insert(0, sym);
                 }
+
+                let next_actions = self.parse_table.get(self.state(), Some(rule.lhs()));
+                let next_action = if next_actions.len() != 1 {
+                    panic!("Expected GOTO but found: {next_actions:?}")
+                } else {
+                    next_actions[0]
+                };
+
+                match next_action {
+                    Action::Shift(dst_state_index) => {
+                        self.stack.push((dst_state_index, rule.lhs()));
+                    }
+                    Action::Halt => {
+                        self.stack.push((StateIndex(0), rule.lhs()));
+                        self.halted = true;
+                    }
+                    _ => {
+                        panic!("Expected Shift after reduction but found {next_action:?}")
+                    }
+                };
             }
             Action::Halt => {
                 self.halted = true;
@@ -85,15 +105,9 @@ impl<'g, 't> Machine<'g, 't> {
         }
     }
 
-    pub fn run(&mut self, input: &mut impl Iterator<Item=Symbol<'g>>) {
+    pub fn run(&mut self) {
         while !self.halted {
-            if let Some(symbol) = self.head.pop() {
-                self.step(Some(symbol));
-            } else {
-                let symbol = input.next();
-                self.step(symbol);
-            }
-
+            self.step();
             self.step += 1;
         }
     }
