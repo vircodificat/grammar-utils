@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use crate::*;
 
@@ -6,11 +6,11 @@ use crate::*;
 pub struct Item<'g> {
     rule: Rule<'g>,
     pos: usize,
-    lookahead: HashSet<Option<Symbol<'g>>>,
+    lookahead: BTreeSet<Option<Symbol<'g>>>,
 }
 
 impl<'g> Item<'g> {
-    pub fn new(rule: Rule<'g>, pos: usize, lookahead: HashSet<Option<Symbol<'g>>>) -> Item<'g> {
+    pub fn new(rule: Rule<'g>, pos: usize, lookahead: BTreeSet<Option<Symbol<'g>>>) -> Item<'g> {
         assert!(pos <= rule.rhs().len());
 
         Item {
@@ -28,7 +28,7 @@ impl<'g> Item<'g> {
         self.pos
     }
 
-    pub fn lookahead(&self) -> &HashSet<Option<Symbol<'g>>> {
+    pub fn lookahead(&self) -> &BTreeSet<Option<Symbol<'g>>> {
         &self.lookahead
     }
 

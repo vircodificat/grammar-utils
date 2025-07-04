@@ -5,7 +5,7 @@ macro_rules! grammar {
             $lhs:ident -> $( $rhs:ident )* ;
         )*
     ) => {{
-        let mut symbols = ::std::collections::HashSet::<String>::new();
+        let mut symbols = ::std::collections::BTreeSet::<String>::new();
         let mut g = Grammar::new();
 
         $(

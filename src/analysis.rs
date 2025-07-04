@@ -1,11 +1,11 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 
 use super::*;
 
 /// A structure for calculating the set of nullable nonterminals
 /// as well as the FIRST and FOLLOW sets for each nonterminal.
 pub struct GrammarAnalysis<'g> {
-    nullables: HashSet<Symbol<'g>>,
+    nullables: BTreeSet<Symbol<'g>>,
     first_follows: FirstFollows<'g>,
 }
 
@@ -27,7 +27,7 @@ impl<'g> GrammarAnalysis<'g> {
     /// The result is a set of nonterminals.
     /// A `Symbol` is nullable if it can expand into an empty string of terminals
     /// through the application of some sequence of production rules.
-    pub fn nullables(&self) -> HashSet<Symbol<'g>> {
+    pub fn nullables(&self) -> BTreeSet<Symbol<'g>> {
         self.nullables.clone()
     }
 
@@ -36,8 +36,8 @@ impl<'g> GrammarAnalysis<'g> {
         self.nullables.contains(&symbol)
     }
 
-    pub fn first_seq(&self, seq: &[Symbol<'g>]) -> HashSet<Symbol<'g>> {
-        let mut result = HashSet::new();
+    pub fn first_seq(&self, seq: &[Symbol<'g>]) -> BTreeSet<Symbol<'g>> {
+        let mut result = BTreeSet::new();
 
         for symbol in seq {
             if symbol.is_terminal() {
@@ -62,7 +62,7 @@ impl<'g> GrammarAnalysis<'g> {
     /// The result is a set of terminals.
     /// A terminal is in the FIRST set of a nonterminal if some sequence of production rules
     /// starting with that nonterminal expands to a string of terminals starting with that terminal.
-    pub fn first(&self, symbol: Symbol<'g>) -> HashSet<Symbol<'g>> {
+    pub fn first(&self, symbol: Symbol<'g>) -> BTreeSet<Symbol<'g>> {
         self.first_follows.terminals_from(FFNode::First(symbol))
     }
 
@@ -71,7 +71,7 @@ impl<'g> GrammarAnalysis<'g> {
     /// The result is a set of terminals.
     /// A terminal is in the FOLLOW set of a nonterminal that terminal could legally follow the
     /// nonterminal during parsing.
-    pub fn follow(&self, symbol: Symbol<'g>) -> HashSet<Symbol<'g>> {
+    pub fn follow(&self, symbol: Symbol<'g>) -> BTreeSet<Symbol<'g>> {
         self.first_follows.terminals_from(FFNode::Follow(symbol))
     }
 
@@ -79,8 +79,8 @@ impl<'g> GrammarAnalysis<'g> {
         self.first_follows.follows_to_follow(start_symbol).contains(&symbol)
     }
 
-    fn calc_nullables(grammar: &'g Grammar) -> HashSet<Symbol<'g>> {
-        let mut nullables = HashSet::new();
+    fn calc_nullables(grammar: &'g Grammar) -> BTreeSet<Symbol<'g>> {
+        let mut nullables = BTreeSet::new();
 
         // Repeat until an iteration adds nothing new.
         loop {
@@ -107,7 +107,7 @@ impl<'g> GrammarAnalysis<'g> {
     }
 
     // Calculate the FirstFollows graph of the `Grammar`
-    fn calc_first_follows(grammar: &'g Grammar, nullables: &HashSet<Symbol<'g>>) -> FirstFollows<'g> {
+    fn calc_first_follows(grammar: &'g Grammar, nullables: &BTreeSet<Symbol<'g>>) -> FirstFollows<'g> {
         let mut first_follows = FirstFollows::new();
 
         for rule in grammar.rules() {
@@ -168,12 +168,12 @@ impl<'g> GrammarAnalysis<'g> {
 struct FirstFollows<'g> {
     // An adjacency list mapping `from_node` to `to_node`.
     // This indicates that the set represented by `from_node` contains the set represented by `to_node`
-    edges: HashMap<FFNode<'g>, HashSet<FFNode<'g>>>,
+    edges: BTreeMap<FFNode<'g>, BTreeSet<FFNode<'g>>>,
 
-    rev_edges: HashMap<FFNode<'g>, HashSet<FFNode<'g>>>,
+    rev_edges: BTreeMap<FFNode<'g>, BTreeSet<FFNode<'g>>>,
 }
 
-#[derive(Eq, PartialEq, Hash, Clone, Copy)]
+#[derive(Eq, PartialEq, Hash, Clone, Copy, PartialOrd, Ord)]
 enum FFNode<'g> {
     // The FIRST set of the symbol
     First(Symbol<'g>),
@@ -186,8 +186,8 @@ enum FFNode<'g> {
 impl<'g> FirstFollows<'g> {
     fn new() -> FirstFollows<'g> {
         FirstFollows {
-            edges: HashMap::new(),
-            rev_edges: HashMap::new(),
+            edges: BTreeMap::new(),
+            rev_edges: BTreeMap::new(),
         }
     }
 
@@ -195,12 +195,12 @@ impl<'g> FirstFollows<'g> {
     // Note: If the `from_node` is not present in the graph already, it allocates a new adjacency list for it.
     fn link(&mut self, from_node: FFNode<'g>, to_node: FFNode<'g>) {
         if !self.edges.contains_key(&from_node) {
-            self.edges.insert(from_node, HashSet::new());
+            self.edges.insert(from_node, BTreeSet::new());
         }
         self.edges.get_mut(&from_node).unwrap().insert(to_node);
 
         if !self.rev_edges.contains_key(&to_node) {
-            self.rev_edges.insert(to_node, HashSet::new());
+            self.rev_edges.insert(to_node, BTreeSet::new());
         }
         self.rev_edges.get_mut(&to_node).unwrap().insert(from_node);
     }
@@ -208,10 +208,10 @@ impl<'g> FirstFollows<'g> {
     // Perform a breadth-first search of the graph starting from `from_node`
     // and return the set of terminals reachable from it.
     // These are precisely the set represented by the node.
-    fn terminals_from(&self, from_node: FFNode<'g>) -> HashSet<Symbol<'g>> {
-        let mut visited = HashSet::new();
+    fn terminals_from(&self, from_node: FFNode<'g>) -> BTreeSet<Symbol<'g>> {
+        let mut visited = BTreeSet::new();
         let mut queue = vec![from_node];
-        let mut terminals = HashSet::new();
+        let mut terminals = BTreeSet::new();
 
         while let Some(node) = queue.pop() {
             visited.insert(node);
@@ -230,10 +230,10 @@ impl<'g> FirstFollows<'g> {
     }
 
     // Find all nonterminals where `FOLLOW(start_symbol)` can be reached from `FOLLOW(N)`.
-    fn follows_to_follow(&self, start_symbol: Symbol<'g>) -> HashSet<Symbol<'g>> {
-        let mut visited = HashSet::new();
+    fn follows_to_follow(&self, start_symbol: Symbol<'g>) -> BTreeSet<Symbol<'g>> {
+        let mut visited = BTreeSet::new();
         let mut queue = vec![FFNode::Follow(start_symbol)];
-        let mut nonterminals = HashSet::new();
+        let mut nonterminals = BTreeSet::new();
 
         while let Some(node) = queue.pop() {
             visited.insert(node);

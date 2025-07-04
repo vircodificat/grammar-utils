@@ -9,10 +9,11 @@ pub struct State<'g> {
     items: Vec<Item<'g>>,
 }
 
+// TODO contents should be private
 /// The index of a given state.
 #[derive(Debug)]
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub struct StateIndex(pub(crate) usize);
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub struct StateIndex(pub usize);
 
 impl From<StateIndex> for usize {
     fn from(value: StateIndex) -> Self {

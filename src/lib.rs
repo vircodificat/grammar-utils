@@ -9,5 +9,5 @@ mod macros;
 mod grammar;
 mod analysis;
 
-pub use grammar::{Grammar, Rule, Symbol};
+pub use grammar::{Grammar, Rule, Symbol, RuleIndex, SymbolIndex};
 pub use analysis::GrammarAnalysis;

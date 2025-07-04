@@ -1,8 +1,9 @@
 use super::*;
 
+// TODO contents should be private
 #[derive(Debug)]
-#[derive(Clone, Copy, Eq, PartialEq, Hash)]
-pub struct StateIndex(pub(crate) usize);
+#[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
+pub struct StateIndex(pub usize);
 
 #[derive(PartialEq, Eq)]
 pub struct State<'g> {

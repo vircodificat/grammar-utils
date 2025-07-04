@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use crate::*;
 
@@ -10,13 +10,13 @@ fn test_macro() {
         B -> ;
     };
 
-    let symbols_actual: HashSet<_> =
+    let symbols_actual: BTreeSet<_> =
         grammar
         .symbols()
         .into_iter()
         .map(|symbol| format!("{symbol:?}"))
         .collect();
-    let symbols_expected: HashSet<_> =
+    let symbols_expected: BTreeSet<_> =
         ["A", "B", "x", "y"]
         .into_iter()
         .map(|s| s.to_string())

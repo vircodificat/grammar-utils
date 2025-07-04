@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use crate::*;
 use crate::analysis::GrammarAnalysis;
@@ -11,8 +11,8 @@ fn test_grammar() {
         B -> y y;
     };
 
-    let symbols_actual: HashSet<String> = grammar.symbols().into_iter().map(|symbol| symbol.name()).collect();
-    let symbols_expected: HashSet<String> = vec!["x", "y", "A", "B"].into_iter().map(|s| s.to_string()).collect();
+    let symbols_actual: BTreeSet<String> = grammar.symbols().into_iter().map(|symbol| symbol.name()).collect();
+    let symbols_expected: BTreeSet<String> = vec!["x", "y", "A", "B"].into_iter().map(|s| s.to_string()).collect();
     assert_eq!(symbols_expected, symbols_actual);
 }
 
@@ -29,8 +29,8 @@ fn test_nullables() {
     };
 
     let analysis = GrammarAnalysis::build(&grammar);
-    let nullables_actual: HashSet<String> = analysis.nullables().into_iter().map(|symbol| symbol.name()).collect();
-    let nullables_expected: HashSet<String> = vec!["A", "B", "D", "E"].into_iter().map(|s| s.to_string()).collect();
+    let nullables_actual: BTreeSet<String> = analysis.nullables().into_iter().map(|symbol| symbol.name()).collect();
+    let nullables_expected: BTreeSet<String> = vec!["A", "B", "D", "E"].into_iter().map(|s| s.to_string()).collect();
     assert_eq!(nullables_actual, nullables_expected);
 }
 

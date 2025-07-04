@@ -1,11 +1,11 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::*;
 
 pub struct ParseTable<'g> {
     grammar: &'g Grammar,
     start_symbol: Symbol<'g>,
-    table: HashMap<(Symbol<'g>, Option<Symbol<'g>>), Vec<Rule<'g>>>,
+    table: BTreeMap<(Symbol<'g>, Option<Symbol<'g>>), Vec<Rule<'g>>>,
 }
 
 impl<'g> ParseTable<'g> {
@@ -26,10 +26,10 @@ impl<'g> ParseTable<'g> {
     }
 
     fn build_table(grammar: &'g Grammar, start_symbol: Symbol<'g>)
-        -> HashMap<(Symbol<'g>, Option<Symbol<'g>>), Vec<Rule<'g>>> {
+        -> BTreeMap<(Symbol<'g>, Option<Symbol<'g>>), Vec<Rule<'g>>> {
 
         let analysis = GrammarAnalysis::build(grammar);
-        let mut map = HashMap::new();
+        let mut map = BTreeMap::new();
 
         let rules = grammar.rules();
 

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 use crate::*;
 use super::*;
@@ -7,7 +7,7 @@ use super::*;
 pub struct ParseTable<'g> {
     grammar: &'g Grammar,
     pub(crate) states: Vec<State<'g>>,
-    pub(crate) actions: HashMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>>,
+    pub(crate) actions: BTreeMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>>,
 }
 
 #[derive(Debug)]
@@ -78,9 +78,9 @@ impl<'g> ParseTable<'g> {
         grammar: &'g Grammar,
         states: &[State<'g>],
         start_rule: Rule<'g>,
-    ) -> HashMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>> {
+    ) -> BTreeMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>> {
 
-        let mut actions = HashMap::new();
+        let mut actions = BTreeMap::new();
 
         // Pre-allocate an empty list for all (state_i, maybe_symbol)-pairs
         for (src_state_index, _src_state) in states.iter().enumerate() {

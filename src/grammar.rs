@@ -1,10 +1,10 @@
 // Offset into Grammar::symbols
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub(crate) struct SymbolIndex(usize);
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Ord, PartialOrd)]
+pub struct SymbolIndex(usize);
 
 // Offset into Grammar::rules
-#[derive(Clone, Copy, Eq, PartialEq)]
-pub(crate) struct RuleIndex(usize);
+#[derive(Clone, Copy, Eq, PartialEq, Debug, Ord, PartialOrd)]
+pub struct RuleIndex(usize);
 
 impl From<SymbolIndex> for usize {
     fn from(value: SymbolIndex) -> Self {
@@ -103,9 +103,33 @@ impl<'g> std::hash::Hash for Symbol<'g> {
     }
 }
 
+impl<'g> PartialOrd for Symbol<'g> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.index.partial_cmp(&other.index)
+    }
+}
+
+impl<'g> Ord for Symbol<'g> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.index.cmp(&other.index)
+    }
+}
+
 impl<'g> std::hash::Hash for Rule<'g> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.index.0.hash(state)
+    }
+}
+
+impl<'g> PartialOrd for Rule<'g> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.index.partial_cmp(&other.index)
+    }
+}
+
+impl<'g> Ord for Rule<'g> {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.index.cmp(&other.index)
     }
 }
 
@@ -144,6 +168,10 @@ impl<'g> Rule<'g> {
     /// The `Grammar` backing this rule.
     pub fn grammar(&self) -> &'g Grammar {
         self.grammar
+    }
+
+    pub fn index(&self) -> RuleIndex {
+        self.index
     }
 
     fn data(&self) -> &RuleData {

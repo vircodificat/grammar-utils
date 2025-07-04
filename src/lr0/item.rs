@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 
 use crate::*;
 
@@ -131,7 +131,7 @@ impl<'g> ItemSet<'g> {
     }
 
     pub(crate) fn closure(&self) -> ItemSet<'g> {
-        let mut nonterms_added = HashSet::new();
+        let mut nonterms_added = BTreeSet::new();
         let mut itemset = self.items.clone();
 
         loop {
