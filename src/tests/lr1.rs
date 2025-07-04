@@ -3,26 +3,15 @@ use crate::lr1::*;
 
 #[test]
 fn test_conflicts() {
-    let grammar = Grammar::new()
-        .symbol("*")
-        .symbol("+")
-        .symbol("id")
-        .symbol("(")
-        .symbol(")")
-        .symbol("E")
-        .symbol("E'")
-        .symbol("T")
-        .symbol("T'")
-        .symbol("F")
-        .symbol("S")
-        .rule("S", &["E"])
-        .rule("E", &["T", "+", "E"])
-        .rule("E", &["T"])
-        .rule("T", &["F", "*", "T"])
-        .rule("T", &["F"])
-        .rule("F", &["id"])
-        .rule("F", &["(", "E", ")"])
-        .build();
+    let grammar = grammar! {
+        S -> E;
+        E -> T plus E;
+        E -> T;
+        T -> F times T;
+        T -> F;
+        F -> id;
+        F -> lparen E rparen;
+    };
 
     let table = ParseTable::build(&grammar, grammar.rules()[0]);
     dbg!(&table.states().len());
@@ -37,39 +26,28 @@ fn test_conflicts() {
 
 #[test]
 fn test_machine() {
-    let grammar = Grammar::new()
-        .symbol("*")
-        .symbol("+")
-        .symbol("id")
-        .symbol("(")
-        .symbol(")")
-        .symbol("E")
-        .symbol("E'")
-        .symbol("T")
-        .symbol("T'")
-        .symbol("F")
-        .symbol("S")
-        .rule("S", &["E"])
-        .rule("E", &["T", "+", "E"])
-        .rule("E", &["T"])
-        .rule("T", &["F", "*", "T"])
-        .rule("T", &["F"])
-        .rule("F", &["id"])
-        .rule("F", &["(", "E", ")"])
-        .build();
+    let grammar = grammar! {
+        S -> E;
+        E -> T plus E;
+        E -> T;
+        T -> F times T;
+        T -> F;
+        F -> id;
+        F -> lparen E rparen;
+    };
 
     let table = ParseTable::build(&grammar, grammar.rules()[0]);
     table.dump();
     let mut input = [
         grammar.symbol("id").unwrap(),
-        grammar.symbol("+").unwrap(),
+        grammar.symbol("plus").unwrap(),
         grammar.symbol("id").unwrap(),
-        grammar.symbol("*").unwrap(),
-        grammar.symbol("(").unwrap(),
+        grammar.symbol("times").unwrap(),
+        grammar.symbol("lparen").unwrap(),
         grammar.symbol("id").unwrap(),
-        grammar.symbol("+").unwrap(),
+        grammar.symbol("plus").unwrap(),
         grammar.symbol("id").unwrap(),
-        grammar.symbol(")").unwrap(),
+        grammar.symbol("rparen").unwrap(),
     ].into_iter();
     let mut machine = Machine::new(&table, &mut input);
     machine.run();
@@ -77,24 +55,15 @@ fn test_machine() {
 
 #[test]
 fn test_conflicts2() {
-    let grammar = Grammar::new()
-        .symbol("start")
-        .symbol("command")
-        .symbol("data")
-        .symbol("file")
-        .symbol("write")
-        .symbol("read")
-        .symbol("to")
-        .symbol("from")
-        .symbol("identifier")
-        .rule("start", &["command"])
-        .rule("command", &["write", "data", "to",   "file"])
-        .rule("command", &["write", "file", "from", "data"])
-        .rule("command", &["read",  "data", "from", "file"])
-        .rule("command", &["read",  "file", "to",   "data"])
-        .rule("file", &["identifier"])
-        .rule("data", &["identifier"])
-        .build();
+    let grammar = grammar! {
+        start -> command;
+        command -> write data to   file;
+        command -> write file from data;
+        command -> read  data from file;
+        command -> read  file to   data;
+        file -> identifier;
+        data -> identifier;
+    };
 
     let table = ParseTable::build(&grammar, grammar.rules()[0]);
     table.dump();

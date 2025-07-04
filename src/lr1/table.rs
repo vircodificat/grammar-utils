@@ -46,6 +46,9 @@ pub struct Conflict<'g, 't> {
 }
 
 impl<'g> ParseTable<'g> {
+    /// Build a parse table from a gramar.
+    ///
+    /// The `start_rule` will be used as the top-level production for the table.
     pub fn build(grammar: &'g Grammar, start_rule: Rule<'g>) -> ParseTable<'g> {
         let analysis = GrammarAnalysis::build(grammar);
         let states = Self::build_states(&grammar, &analysis, start_rule);
@@ -58,10 +61,12 @@ impl<'g> ParseTable<'g> {
         }
     }
 
+    /// Get the underlying grammar for this parse table.
     pub fn grammar(&self) -> &'g Grammar {
         self.grammar
     }
 
+    /// Get a slice of all of the states for this table.
     pub fn states(&self) -> &[State<'g>] {
         &self.states
     }
@@ -160,6 +165,7 @@ impl<'g> ParseTable<'g> {
             .unwrap()
     }
 
+    /// Return a list of all of the conflicts found in this table.
     pub fn conflicts(&self) -> Vec<Conflict> {
         let mut conflicts = vec![];
         for (state_index, _state) in self.states.iter().enumerate() {

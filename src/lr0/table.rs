@@ -66,7 +66,9 @@ impl<'g> ParseTable<'g> {
                 }
             }
 
-            states.push(state);
+            if !states.contains(&state) {
+                states.push(state);
+            }
         }
 
         states
@@ -159,6 +161,25 @@ impl<'g> ParseTable<'g> {
             }
         }
         conflicts
+    }
+
+    pub fn get(&self, state_index: StateIndex, symbol: Option<Symbol<'g>>) -> Vec<Action<'g>> {
+        let key = (state_index, symbol);
+        self.actions.get(&key).unwrap().to_vec()
+    }
+
+    pub fn dump(&self) {
+        for (state_index, state) in self.states.iter().enumerate() {
+            let state_index = StateIndex(state_index);
+            eprintln!("{state_index:?}");
+            eprintln!("{state:?}");
+
+            for symbol in self.grammar.symbols() {
+                eprintln!("    {symbol:?} => {:?}", self.get(state_index, Some(symbol)));
+            }
+            eprintln!("    None => {:?}", self.get(state_index, None));
+            eprintln!();
+        }
     }
 }
 

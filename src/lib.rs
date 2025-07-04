@@ -5,6 +5,7 @@ pub mod ll1;
 pub mod lr0;
 pub mod lr1;
 
+mod macros;
 mod grammar;
 mod analysis;
 

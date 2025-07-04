@@ -61,6 +61,11 @@ where I: Iterator<Item=Symbol<'g>> {
             panic!("Multiple actions: {actions:?}")
         };
 
+        {
+            eprintln!("ACTION:  {action:?}");
+            eprintln!();
+        }
+
         match action {
             Action::Shift(dst_state_index) => {
                 self.input.next();
@@ -73,6 +78,9 @@ where I: Iterator<Item=Symbol<'g>> {
                     let Some((_state, sym)) = self.stack.pop() else { panic!() };
                     children.insert(0, sym);
                 }
+
+                eprintln!("REDUCE {rule:?} with children {children:?}");
+                eprintln!();
 
                 let next_actions = self.parse_table.get(self.state(), Some(rule.lhs()));
                 let next_action = if next_actions.len() != 1 {
@@ -97,11 +105,6 @@ where I: Iterator<Item=Symbol<'g>> {
             Action::Halt => {
                 self.halted = true;
             }
-        }
-
-        {
-            eprintln!("ACTION:  {action:?}");
-            eprintln!();
         }
     }
 

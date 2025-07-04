@@ -5,39 +5,28 @@ use crate::analysis::GrammarAnalysis;
 
 #[test]
 fn test_grammar() {
-    let grammar = Grammar::new()
-        .symbol("x")
-        .symbol("y")
-        .symbol("A")
-        .symbol("B")
-        .rule("A", &["B", "x"])
-        .rule("B", &["y", "A"])
-        .rule("B", &["y", "y"])
-        .build();
+    let grammar = grammar! {
+        A -> B x;
+        B -> y A;
+        B -> y y;
+    };
 
-    let symbols_actual: Vec<String> = grammar.symbols().into_iter().map(|symbol| symbol.name()).collect();
-    let symbols_expected: Vec<String> = vec!["x", "y", "A", "B"].into_iter().map(|s| s.to_string()).collect();
+    let symbols_actual: HashSet<String> = grammar.symbols().into_iter().map(|symbol| symbol.name()).collect();
+    let symbols_expected: HashSet<String> = vec!["x", "y", "A", "B"].into_iter().map(|s| s.to_string()).collect();
     assert_eq!(symbols_expected, symbols_actual);
 }
 
 #[test]
 fn test_nullables() {
-    let grammar = Grammar::new()
-        .symbol("x")
-        .symbol("y")
-        .symbol("A")
-        .symbol("B")
-        .symbol("C")
-        .symbol("D")
-        .symbol("E")
-        .rule("A", &[])
-        .rule("B", &[])
-        .rule("A", &["x"])
-        .rule("C", &["y"])
-        .rule("D", &["y"])
-        .rule("D", &["B"])
-        .rule("E", &["A", "B"])
-        .build();
+    let grammar = grammar! {
+        A -> ;
+        B -> ;
+        A -> x;
+        C -> y;
+        D -> y;
+        D -> B;
+        E -> A B;
+    };
 
     let analysis = GrammarAnalysis::build(&grammar);
     let nullables_actual: HashSet<String> = analysis.nullables().into_iter().map(|symbol| symbol.name()).collect();
@@ -47,16 +36,12 @@ fn test_nullables() {
 
 #[test]
 fn test_nullables_with_empty() {
-    let grammar = Grammar::new()
-        .symbol("x")
-        .symbol("A")
-        .symbol("B")
-        .symbol("C")
-        .rule("A", &["x"])
-        .rule("A", &[])
-        .rule("B", &["A"])
-        .rule("C", &["x"])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        A -> ;
+        B -> A;
+        C -> x;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
@@ -68,16 +53,12 @@ fn test_nullables_with_empty() {
 
 #[test]
 fn test_follow_simple() {
-    let grammar = Grammar::new()
-        .symbol("x")
-        .symbol("y")
-        .symbol("A")
-        .symbol("B")
-        .rule("A", &["x"])
-        .rule("A", &[])
-        .rule("B", &["A", "x"])
-        .rule("B", &["A", "y"])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        A -> ;
+        B -> A x;
+        B -> A y;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
@@ -93,13 +74,10 @@ fn test_follow_simple() {
 /// Make sure FIRST(A) is defined in the "obvious" case.
 #[test]
 fn test_first() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("x")
-        .symbol("y")
-        .rule("A", &["x"])
-        .rule("A", &["y"])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        A -> y;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let x = grammar.symbol("x").unwrap();
@@ -114,16 +92,12 @@ fn test_first() {
 /// Ensure that it handles both the immediate case and the recursive case.
 #[test]
 fn test_empty() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("C")
-        .symbol("x")
-        .rule("A", &["x"])
-        .rule("A", &[])
-        .rule("B", &["A"])
-        .rule("C", &["x"])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        A -> ;
+        B -> A;
+        C -> x;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
@@ -136,14 +110,11 @@ fn test_empty() {
 /// Make sure FIRST(A) handles the case where the first symbol of the RHS of a rule is nullable.
 #[test]
 fn test_first_with_empty() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("x")
-        .rule("A", &["x"])
-        .rule("A", &[])
-        .rule("B", &["A", "x"])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        A -> ;
+        B -> A x;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
@@ -158,13 +129,10 @@ fn test_first_with_empty() {
 /// Test FIRST even when you have left recursion.
 #[test]
 fn test_first_left_recursion() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("x")
-        .rule("A", &["x"])
-        .rule("A", &["A", "x"])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        A -> A x;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let x = grammar.symbol("x").unwrap();
@@ -177,14 +145,11 @@ fn test_first_left_recursion() {
 /// Test FIRST even when you have mutual recursion.
 #[test]
 fn test_first_mutual_recursion() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("x")
-        .rule("A", &["x"])
-        .rule("A", &["B"])
-        .rule("B", &["A"])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        A -> B;
+        B -> A;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let x = grammar.symbol("x").unwrap();
@@ -196,18 +161,12 @@ fn test_first_mutual_recursion() {
 
 #[test]
 fn test_follow_nullable() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("C")
-        .symbol("x")
-        .symbol("y")
-        .symbol("z")
-        .rule("A", &["x"])
-        .rule("B", &["A", "y"])
-        .rule("B", &["A", "C", "z"])
-        .rule("C", &[])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        B -> A y;
+        B -> A C z;
+        C -> ;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let y = grammar.symbol("y").unwrap();
@@ -220,23 +179,15 @@ fn test_follow_nullable() {
 
 #[test]
 fn test_follow_nullable2() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("C")
-        .symbol("D")
-        .symbol("E")
-        .symbol("x")
-        .symbol("y")
-        .symbol("z")
-        .rule("A", &["B", "C", "D"])
-        .rule("B", &["x"])
-        .rule("B", &[])
-        .rule("C", &["y"])
-        .rule("C", &[])
-        .rule("D", &[])
-        .rule("E", &["A", "z"])
-        .build();
+    let grammar = grammar! {
+        A -> B C D;
+        B -> x;
+        B -> ;
+        C -> y;
+        C -> ;
+        D -> ;
+        E -> A z;
+    };
 
     let b = grammar.symbol("B").unwrap();
     let y = grammar.symbol("y").unwrap();
@@ -249,19 +200,12 @@ fn test_follow_nullable2() {
 
 #[test]
 fn test_follow_nullable3() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("C")
-        .symbol("D")
-        .symbol("x")
-        .symbol("y")
-        .symbol("z")
-        .rule("A", &["B", "C", "D"])
-        .rule("B", &["x"])
-        .rule("C", &["y"])
-        .rule("D", &["z"])
-        .build();
+    let grammar = grammar! {
+        A -> B C D;
+        B -> x;
+        C -> y;
+        D -> z;
+    };
 
     let b = grammar.symbol("B").unwrap();
     let y = grammar.symbol("y").unwrap();
@@ -273,19 +217,13 @@ fn test_follow_nullable3() {
 
 #[test]
 fn test_first2() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("C")
-        .symbol("D")
-        .symbol("x")
-        .symbol("y")
-        .rule("A", &["B"])
-        .rule("B", &["C"])
-        .rule("C", &["D", "y"])
-        .rule("D", &["x"])
-        .rule("D", &[])
-        .build();
+    let grammar = grammar! {
+        A -> B;
+        B -> C;
+        C -> D y;
+        D -> x;
+        D -> ;
+    };
 
     let analysis = GrammarAnalysis::build(&grammar);
 
@@ -304,12 +242,10 @@ fn test_first2() {
 
 #[test]
 fn test_first_nullable() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("x")
-        .rule("A", &["A", "x"])
-        .rule("A", &[])
-        .build();
+    let grammar = grammar! {
+        A -> A x;
+        A -> ;
+    };
 
     let analysis = GrammarAnalysis::build(&grammar);
 
@@ -321,12 +257,10 @@ fn test_first_nullable() {
 
 #[test]
 fn test_is_terminal() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("x")
-        .rule("A", &["A", "x"])
-        .rule("A", &[])
-        .build();
+    let grammar = grammar! {
+        A -> A x;
+        A -> ;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let x = grammar.symbol("x").unwrap();
@@ -337,15 +271,12 @@ fn test_is_terminal() {
 
 #[test]
 fn test_is_nullable_seq() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("x")
-        .rule("A", &["A", "x"])
-        .rule("A", &[])
-        .rule("B", &["A", "A", "A"])
-        .rule("B", &["x"])
-        .build();
+    let grammar = grammar! {
+        A -> A x;
+        A -> ;
+        B -> A A A;
+        B -> x;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
@@ -362,16 +293,12 @@ fn test_is_nullable_seq() {
 
 #[test]
 fn test_first_seq() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("x")
-        .symbol("y")
-        .rule("A", &["A", "x"])
-        .rule("A", &[])
-        .rule("B", &["A", "A", "A"])
-        .rule("B", &["y"])
-        .build();
+    let grammar = grammar! {
+        A -> A x;
+        A -> ;
+        B -> A A A;
+        B -> y;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
@@ -390,19 +317,14 @@ fn test_first_seq() {
 
 #[test]
 fn test_can_end_with() {
-    let grammar = Grammar::new()
-        .symbol("A")
-        .symbol("B")
-        .symbol("C")
-        .symbol("x")
-        .symbol("y")
-        .rule("A", &["x"])
-        .rule("A", &[])
-        .rule("A", &["B"])
-        .rule("A", &["C", "B"])
-        .rule("B", &["y"])
-        .rule("C", &["x"])
-        .build();
+    let grammar = grammar! {
+        A -> x;
+        A -> ;
+        A -> B;
+        A -> C B;
+        B -> y;
+        C -> x;
+    };
 
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
@@ -425,35 +347,25 @@ fn test_can_end_with() {
 
 #[test]
 fn ll1_example1() {
-    let grammar = Grammar::new()
-        .symbol("*")
-        .symbol("+")
-        .symbol("id")
-        .symbol("(")
-        .symbol(")")
-        .symbol("E")
-        .symbol("E'")
-        .symbol("T")
-        .symbol("T'")
-        .symbol("F")
-        .rule("E", &["T", "E'"])
-        .rule("E'", &["+", "T", "E'"])
-        .rule("E'", &[])
-        .rule("T", &["F", "T'"])
-        .rule("T'", &["*", "F", "T'"])
-        .rule("T'", &[])
-        .rule("F", &["id"])
-        .rule("F", &["(", "E", ")"])
-        .build();
+    let grammar = grammar! {
+        E -> T Emore;
+        Emore -> plus T Emore;
+        Emore -> ;
+        T -> F Tmore ;
+        Tmore -> times F Tmore ;
+        Tmore -> ;
+        F -> id;
+        F -> lparen E rparen;
+    };
 
     let table = ll1::ParseTable::build(&grammar, grammar.symbol("E").unwrap());
     eprintln!("{table:?}");
 
     let input = vec![
         grammar.symbol("id").unwrap(),
-        grammar.symbol("+").unwrap(),
+        grammar.symbol("plus").unwrap(),
         grammar.symbol("id").unwrap(),
-        grammar.symbol("*").unwrap(),
+        grammar.symbol("times").unwrap(),
         grammar.symbol("id").unwrap(),
     ].into_iter();
     let mut machine = ll1::Machine::new(table, grammar.symbol("E").unwrap(), input);
