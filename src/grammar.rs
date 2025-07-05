@@ -174,6 +174,10 @@ impl<'g> Rule<'g> {
         self.index
     }
 
+    pub fn is_start_rule(&self) -> bool {
+        usize::from(self.index) == 0
+    }
+
     fn data(&self) -> &RuleData {
         &self.grammar.rules[self.index.0]
     }
@@ -205,6 +209,17 @@ impl Grammar {
         GrammarBuilder {
             symbols: vec![],
             rules: vec![],
+        }
+    }
+
+    pub fn start_symbol(&self) -> Symbol {
+        self.start_rule().lhs()
+    }
+
+    pub fn start_rule(&self) -> Rule {
+        Rule {
+            grammar: self,
+            index: RuleIndex(0),
         }
     }
 
@@ -292,6 +307,9 @@ impl GrammarBuilder {
 
     /// Finish building this object and return the result as a `Grammar`.
     pub fn build(self) -> Grammar {
+        let start_rule = &self.rules[0];
+        assert_eq!(start_rule.rhs.len(), 1);
+
         Grammar {
             symbols: self.symbols,
             rules: self.rules,

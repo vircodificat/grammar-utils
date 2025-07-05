@@ -6,19 +6,21 @@ use crate::analysis::GrammarAnalysis;
 #[test]
 fn test_grammar() {
     let grammar = grammar! {
+        S -> A;
         A -> B x;
         B -> y A;
         B -> y y;
     };
 
     let symbols_actual: BTreeSet<String> = grammar.symbols().into_iter().map(|symbol| symbol.name()).collect();
-    let symbols_expected: BTreeSet<String> = vec!["x", "y", "A", "B"].into_iter().map(|s| s.to_string()).collect();
+    let symbols_expected: BTreeSet<String> = vec!["x", "y", "A", "B", "S"].into_iter().map(|s| s.to_string()).collect();
     assert_eq!(symbols_expected, symbols_actual);
 }
 
 #[test]
 fn test_nullables() {
     let grammar = grammar! {
+        S -> A;
         A -> ;
         B -> ;
         A -> x;
@@ -30,30 +32,33 @@ fn test_nullables() {
 
     let analysis = GrammarAnalysis::build(&grammar);
     let nullables_actual: BTreeSet<String> = analysis.nullables().into_iter().map(|symbol| symbol.name()).collect();
-    let nullables_expected: BTreeSet<String> = vec!["A", "B", "D", "E"].into_iter().map(|s| s.to_string()).collect();
+    let nullables_expected: BTreeSet<String> = vec!["S", "A", "B", "D", "E"].into_iter().map(|s| s.to_string()).collect();
     assert_eq!(nullables_actual, nullables_expected);
 }
 
 #[test]
 fn test_nullables_with_empty() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         A -> ;
         B -> A;
         C -> x;
     };
 
+    let s = grammar.symbol("S").unwrap();
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
 
     let analysis = GrammarAnalysis::build(&grammar);
 
-    assert_eq!(analysis.nullables(), [a, b].iter().copied().collect());
+    assert_eq!(analysis.nullables(), [s, a, b].iter().copied().collect());
 }
 
 #[test]
 fn test_follow_simple() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         A -> ;
         B -> A x;
@@ -75,6 +80,7 @@ fn test_follow_simple() {
 #[test]
 fn test_first() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         A -> y;
     };
@@ -93,24 +99,27 @@ fn test_first() {
 #[test]
 fn test_empty() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         A -> ;
         B -> A;
         C -> x;
     };
 
+    let s = grammar.symbol("S").unwrap();
     let a = grammar.symbol("A").unwrap();
     let b = grammar.symbol("B").unwrap();
 
     let analysis = GrammarAnalysis::build(&grammar);
 
-    assert_eq!(analysis.nullables(), [a, b].iter().copied().collect());
+    assert_eq!(analysis.nullables(), [s, a, b].iter().copied().collect());
 }
 
 /// Make sure FIRST(A) handles the case where the first symbol of the RHS of a rule is nullable.
 #[test]
 fn test_first_with_empty() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         A -> ;
         B -> A x;
@@ -130,6 +139,7 @@ fn test_first_with_empty() {
 #[test]
 fn test_first_left_recursion() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         A -> A x;
     };
@@ -146,6 +156,7 @@ fn test_first_left_recursion() {
 #[test]
 fn test_first_mutual_recursion() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         A -> B;
         B -> A;
@@ -162,6 +173,7 @@ fn test_first_mutual_recursion() {
 #[test]
 fn test_follow_nullable() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         B -> A y;
         B -> A C z;
@@ -180,6 +192,7 @@ fn test_follow_nullable() {
 #[test]
 fn test_follow_nullable2() {
     let grammar = grammar! {
+        S -> A;
         A -> B C D;
         B -> x;
         B -> ;
@@ -201,6 +214,7 @@ fn test_follow_nullable2() {
 #[test]
 fn test_follow_nullable3() {
     let grammar = grammar! {
+        S -> A;
         A -> B C D;
         B -> x;
         C -> y;
@@ -218,6 +232,7 @@ fn test_follow_nullable3() {
 #[test]
 fn test_first2() {
     let grammar = grammar! {
+        S -> A;
         A -> B;
         B -> C;
         C -> D y;
@@ -243,6 +258,7 @@ fn test_first2() {
 #[test]
 fn test_first_nullable() {
     let grammar = grammar! {
+        S -> A;
         A -> A x;
         A -> ;
     };
@@ -258,6 +274,7 @@ fn test_first_nullable() {
 #[test]
 fn test_is_terminal() {
     let grammar = grammar! {
+        S -> A;
         A -> A x;
         A -> ;
     };
@@ -272,6 +289,7 @@ fn test_is_terminal() {
 #[test]
 fn test_is_nullable_seq() {
     let grammar = grammar! {
+        S -> A;
         A -> A x;
         A -> ;
         B -> A A A;
@@ -294,6 +312,7 @@ fn test_is_nullable_seq() {
 #[test]
 fn test_first_seq() {
     let grammar = grammar! {
+        S -> A;
         A -> A x;
         A -> ;
         B -> A A A;
@@ -318,6 +337,7 @@ fn test_first_seq() {
 #[test]
 fn test_can_end_with() {
     let grammar = grammar! {
+        S -> A;
         A -> x;
         A -> ;
         A -> B;
@@ -348,6 +368,7 @@ fn test_can_end_with() {
 #[test]
 fn ll1_example1() {
     let grammar = grammar! {
+        S -> E;
         E -> T Emore;
         Emore -> plus T Emore;
         Emore -> ;

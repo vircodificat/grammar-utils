@@ -82,6 +82,11 @@ where I: Iterator<Item=Symbol<'g>> {
                 eprintln!("REDUCE {rule:?} with children {children:?}");
                 eprintln!();
 
+                if rule == self.parse_table.grammar().start_rule() {
+                    self.halted = true;
+                    return;
+                }
+
                 let next_actions = self.parse_table.get(self.state(), Some(rule.lhs()));
                 let next_action = if next_actions.len() != 1 {
                     panic!("Expected GOTO but found: {next_actions:?}")
@@ -93,17 +98,10 @@ where I: Iterator<Item=Symbol<'g>> {
                     Action::Shift(dst_state_index) => {
                         self.stack.push((dst_state_index, rule.lhs()));
                     }
-                    Action::Halt => {
-                        self.stack.push((StateIndex(0), rule.lhs()));
-                        self.halted = true;
-                    }
                     _ => {
                         panic!("Expected Shift after reduction but found {next_action:?}")
                     }
                 };
-            }
-            Action::Halt => {
-                self.halted = true;
             }
         }
     }

@@ -54,23 +54,25 @@ fn test_machine() {
 #[test]
 fn debug_for_items() {
     let grammar = grammar! {
+        S -> A;
         A -> x y z;
     };
 
-    let rule0 = grammar.rules()[0];
-    assert_eq!(&format!("{:?}", Item::new(rule0, 0)), "A -> . x y z");
-    assert_eq!(&format!("{:?}", Item::new(rule0, 1)), "A -> x . y z");
-    assert_eq!(&format!("{:?}", Item::new(rule0, 2)), "A -> x y . z");
-    assert_eq!(&format!("{:?}", Item::new(rule0, 3)), "A -> x y z .");
+    let rule = grammar.rules()[1];
+    assert_eq!(&format!("{:?}", Item::new(rule, 0)), "A -> . x y z");
+    assert_eq!(&format!("{:?}", Item::new(rule, 1)), "A -> x . y z");
+    assert_eq!(&format!("{:?}", Item::new(rule, 2)), "A -> x y . z");
+    assert_eq!(&format!("{:?}", Item::new(rule, 3)), "A -> x y z .");
 }
 
 #[test]
 fn step_item() {
     let grammar = grammar! {
+        S -> A;
         A -> x y z;
     };
 
-    let mut item = Item::new(grammar.rules()[0], 0);
+    let mut item = Item::new(grammar.rules()[1], 0);
     assert_eq!(&format!("{item:?}"), "A -> . x y z");
 
     item = item.step().unwrap();

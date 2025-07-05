@@ -13,7 +13,7 @@ fn test_conflicts() {
         F -> lparen E rparen;
     };
 
-    let table = ParseTable::build(&grammar, grammar.rules()[0]);
+    let table = ParseTable::build(&grammar);
     dbg!(&table.states().len());
     dbg!(table.conflicts());
     for conflict in table.conflicts() {
@@ -36,7 +36,7 @@ fn test_machine() {
         F -> lparen E rparen;
     };
 
-    let table = ParseTable::build(&grammar, grammar.rules()[0]);
+    let table = ParseTable::build(&grammar);
     table.dump();
     let mut input = [
         grammar.symbol("id").unwrap(),
@@ -65,7 +65,7 @@ fn test_conflicts2() {
         data -> identifier;
     };
 
-    let table = ParseTable::build(&grammar, grammar.rules()[0]);
+    let table = ParseTable::build(&grammar);
     table.dump();
     assert_eq!(table.conflicts().len(), 0);
 

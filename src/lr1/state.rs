@@ -1,3 +1,5 @@
+use std::collections::{BTreeSet, BTreeMap};
+
 use crate::*;
 use super::*;
 
@@ -140,8 +142,25 @@ impl<'g> State<'g> {
 
         State {
             grammar: self.grammar,
-            items: itemset,
+            items: self.squash(itemset),
         }
+    }
+
+    fn squash(&self, itemset: Vec<Item<'g>>) -> Vec<Item<'g>> {
+        let mut lookaheads: BTreeMap<(Rule<'g>, usize), BTreeSet<Option<Symbol<'g>>>> = BTreeMap::new();
+        for item in itemset {
+            let key = (item.rule(), item.pos());
+            if !lookaheads.contains_key(&key) {
+                lookaheads.insert(key, BTreeSet::new());
+            }
+            lookaheads.get_mut(&key).unwrap().extend(item.lookahead());
+        }
+        lookaheads
+            .into_iter()
+            .map(|((rule, pos), lookaheads)| {
+                Item::new(rule, pos, lookaheads)
+            })
+            .collect()
     }
 
     // Take the current state and calculate which state is reached

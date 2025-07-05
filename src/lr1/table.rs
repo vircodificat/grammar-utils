@@ -30,10 +30,6 @@ pub enum Action<'g> {
     /// to remove the nonterminal that was just generated off of input stream
     /// and back onto the stack.
     Reduce(Rule<'g>),
-
-    /// The machine successfully consumed the start rule.
-    /// If there is no more input remaining, the parse was successful.
-    Halt,
 }
 
 /// Information on a conflict found in the given grammar.
@@ -49,10 +45,10 @@ impl<'g> ParseTable<'g> {
     /// Build a parse table from a gramar.
     ///
     /// The `start_rule` will be used as the top-level production for the table.
-    pub fn build(grammar: &'g Grammar, start_rule: Rule<'g>) -> ParseTable<'g> {
+    pub fn build(grammar: &'g Grammar) -> ParseTable<'g> {
         let analysis = GrammarAnalysis::build(grammar);
-        let states = Self::build_states(&grammar, &analysis, start_rule);
-        let actions = Self::build_actions(&grammar, &analysis, &states, start_rule);
+        let states = Self::build_states(&grammar, &analysis);
+        let actions = Self::build_actions(&grammar, &analysis, &states);
 
         ParseTable {
             grammar,
@@ -74,10 +70,9 @@ impl<'g> ParseTable<'g> {
     fn build_states(
         grammar: &'g Grammar,
         analysis: &GrammarAnalysis<'g>,
-        start_rule: Rule<'g>,
     ) -> Vec<State<'g>> {
         let mut states = vec![];
-        let start_state = State::singleton(Item::new(start_rule, 0, vec![None].into_iter().collect()), analysis);
+        let start_state = State::singleton(Item::new(grammar.start_rule(), 0, vec![None].into_iter().collect()), analysis);
         let mut states_remaining = vec![start_state];
 
         while let Some(state) = states_remaining.pop() {
@@ -103,7 +98,6 @@ impl<'g> ParseTable<'g> {
         grammar: &'g Grammar,
         analysis: &GrammarAnalysis<'g>,
         states: &[State<'g>],
-        start_rule: Rule<'g>,
     ) -> BTreeMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>> {
 
         let mut actions = BTreeMap::new();
@@ -145,8 +139,6 @@ impl<'g> ParseTable<'g> {
             }
         }
 
-        let key = (StateIndex(0), Some(start_rule.lhs()));
-        actions.get_mut(&key).unwrap().insert(0, Action::Halt);
 
         actions
     }
