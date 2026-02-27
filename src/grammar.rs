@@ -212,11 +212,11 @@ impl Grammar {
         }
     }
 
-    pub fn start_symbol(&self) -> Symbol {
+    pub fn start_symbol(&self) -> Symbol<'_> {
         self.start_rule().lhs()
     }
 
-    pub fn start_rule(&self) -> Rule {
+    pub fn start_rule(&self) -> Rule<'_> {
         Rule {
             grammar: self,
             index: RuleIndex(0),
@@ -224,7 +224,7 @@ impl Grammar {
     }
 
     /// The set of symbols.
-    pub fn symbols(&self) -> Vec<Symbol> {
+    pub fn symbols(&self) -> Vec<Symbol<'_>> {
         let mut result = vec![];
         for index in 0..self.symbols.len() {
             result.push(Symbol {
@@ -236,7 +236,7 @@ impl Grammar {
     }
 
     /// The set of terminal symbols.
-    pub fn terminals(&self) -> Vec<Symbol> {
+    pub fn terminals(&self) -> Vec<Symbol<'_>> {
         let mut result = vec![];
         for symbol in self.symbols() {
             if symbol.is_terminal() {
@@ -247,7 +247,7 @@ impl Grammar {
     }
 
     /// The set of nonterminal symbols.
-    pub fn nonterminals(&self) -> Vec<Symbol> {
+    pub fn nonterminals(&self) -> Vec<Symbol<'_>> {
         let mut result = vec![];
         for symbol in self.symbols() {
             if symbol.is_nonterminal() {
@@ -258,7 +258,7 @@ impl Grammar {
     }
 
     /// The set of rules.
-    pub fn rules(&self) -> Vec<Rule> {
+    pub fn rules(&self) -> Vec<Rule<'_>> {
         let mut result = vec![];
         for index in 0..self.rules.len() {
             result.push(Rule {
@@ -270,7 +270,7 @@ impl Grammar {
     }
 
     /// Fetch the symbol with the given name if it exists.
-    pub fn symbol<S: AsRef<str>>(&self, name: S) -> Option<Symbol> {
+    pub fn symbol<S: AsRef<str>>(&self, name: S) -> Option<Symbol<'_>> {
         for (index, symbol) in self.symbols.iter().enumerate() {
             if symbol.name == name.as_ref() {
                 return Some(Symbol {

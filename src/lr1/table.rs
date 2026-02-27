@@ -158,7 +158,7 @@ impl<'g> ParseTable<'g> {
     }
 
     /// Return a list of all of the conflicts found in this table.
-    pub fn conflicts(&self) -> Vec<Conflict> {
+    pub fn conflicts(&self) -> Vec<Conflict<'_, '_>> {
         let mut conflicts = vec![];
         for (state_index, _state) in self.states.iter().enumerate() {
             let state_index = StateIndex(state_index);
@@ -213,7 +213,7 @@ impl<'g, 't> Conflict<'g, 't> {
         self.table
     }
 
-    pub fn state(&self) -> &'t State {
+    pub fn state(&self) -> &'t State<'_> {
         &self.table.states[usize::from(self.state)]
     }
 
