@@ -72,3 +72,22 @@ fn test_conflicts2() {
     let table2 = crate::lr0::ParseTable::build(&grammar, grammar.rules()[0]);
     assert!(table2.conflicts().len() > 0);
 }
+
+#[test]
+fn test_empty() {
+    let grammar = grammar! {
+        S -> X ;
+        X -> X a;
+        X -> ;
+    };
+
+    let table = ParseTable::build(&grammar);
+    table.dump();
+    let mut input = [
+        grammar.symbol("a").unwrap(),
+        grammar.symbol("a").unwrap(),
+        grammar.symbol("a").unwrap(),
+    ].into_iter();
+    let mut machine = Machine::new(&table, &mut input);
+    machine.run();
+}

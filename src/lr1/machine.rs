@@ -38,6 +38,7 @@ where I: Iterator<Item=Symbol<'g>> {
         let state = self.state();
 
         {
+            eprintln!("---");
             eprintln!("STEP:   {:?}", self.step);
             eprintln!("SYMBOL: {:?}", symbol);
             eprintln!("STACK:  {:?}", &self.stack);
