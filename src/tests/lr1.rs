@@ -77,16 +77,15 @@ fn test_conflicts2() {
 fn test_empty() {
     let grammar = grammar! {
         S -> X ;
-        X -> X a;
-        X -> ;
+        X -> Y b ;
+        Y -> Y a ;
+        Y -> ;
     };
 
     let table = ParseTable::build(&grammar);
     table.dump();
     let mut input = [
-        grammar.symbol("a").unwrap(),
-        grammar.symbol("a").unwrap(),
-        grammar.symbol("a").unwrap(),
+        grammar.symbol("b").unwrap(),
     ].into_iter();
     let mut machine = Machine::new(&table, &mut input);
     machine.run();
