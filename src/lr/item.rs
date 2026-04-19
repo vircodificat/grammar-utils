@@ -57,6 +57,11 @@ impl<'g> Item<'g> {
     pub fn is_finished(&self) -> bool {
         self.pos() == self.rhs().len()
     }
+
+    // [A -> s1 ... * si si+1 ... sn].remaining_symbols() == si, si+1, ..., sn
+    pub fn remaining_symbols(&self) -> Vec<Symbol<'g>> {
+        self.rule.rhs().into_iter().skip(self.pos()).collect()
+    }
 }
 
 impl<'g> std::fmt::Debug for Item<'g> {

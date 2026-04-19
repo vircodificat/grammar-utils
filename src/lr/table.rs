@@ -23,9 +23,9 @@ pub enum ReductionCondition {
 }
 
 #[derive(Debug)]
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Ord, PartialOrd)]
 pub enum Action<'g> {
-    Shift(StateIndex),
+    Shift(SymbolIndex, StateIndex),
     Reduce(Rule<'g>),
     Halt,
 }
@@ -186,7 +186,7 @@ impl<'g> ParseTable<'g> {
         if let Some(symbol) = symbol {
             let key = (state_index, symbol.index());
             if let Some(shift_state_index) = self.transitions.get(&key) {
-                actions.push(Action::Shift(*shift_state_index));
+                actions.push(Action::Shift(symbol.index(), *shift_state_index));
             }
         }
 
