@@ -37,11 +37,17 @@ impl<'g> ParseTable<'g> {
         let states = Self::build_states(&grammar, start_rule);
         let actions = Self::build_actions(&grammar, &states, start_rule);
 
-        ParseTable {
+        let table = ParseTable {
             grammar,
             states,
             actions,
+        };
+
+        for conflict in table.conflicts() {
+            eprintln!("{conflict:?}");
         }
+
+        table
     }
 
     pub fn grammar(&self) -> &'g Grammar {
