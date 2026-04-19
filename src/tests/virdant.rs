@@ -274,7 +274,7 @@ fn test_virdant() {
 //        println!("  {symbol}");
 //    }
 
-    let table = crate::lr0::ParseTable::build(&grammar, grammar.rules()[0]);
+    let table = crate::lr::ParseTable::build(&grammar, grammar.rules()[0]);
     println!("Number of states: {}", table.states.len());
     println!();
 
