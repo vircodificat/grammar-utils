@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::*;
 use super::*;
@@ -7,7 +7,19 @@ use super::*;
 pub struct ParseTable<'g> {
     grammar: &'g Grammar,
     pub(crate) states: Vec<State<'g>>,
-    pub(crate) actions: BTreeMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>>,
+    pub(crate) transitions: BTreeMap<(StateIndex, SymbolIndex), StateIndex>,
+    pub(crate) reductions: BTreeMap<StateIndex, Vec<Reduction<'g>>>,
+}
+
+#[derive(Debug)]
+#[derive(Clone, PartialEq, Eq)]
+pub struct Reduction<'g>(Rule<'g>, ReductionCondition);
+
+#[derive(Debug)]
+#[derive(Clone, PartialEq, Eq)]
+pub enum ReductionCondition {
+    Always,
+    If(BTreeSet<SymbolIndex>),
 }
 
 #[derive(Debug)]
@@ -35,12 +47,14 @@ impl<'g> std::fmt::Debug for State<'g> {
 impl<'g> ParseTable<'g> {
     pub fn build(grammar: &'g Grammar, start_rule: Rule<'g>) -> ParseTable<'g> {
         let states = Self::build_states(&grammar, start_rule);
-        let actions = Self::build_actions(&grammar, &states, start_rule);
+        let transitions = Self::build_transitions(&grammar, &states);
+        let reductions = Self::build_reductions(&states);
 
         let table = ParseTable {
             grammar,
             states,
-            actions,
+            transitions,
+            reductions,
         };
 
         for conflict in table.conflicts() {
@@ -80,83 +94,70 @@ impl<'g> ParseTable<'g> {
         states
     }
 
-    fn build_actions(
+    fn state_index(
+        states: &[State<'g>],
+        itemset: &ItemSet<'g>,
+    ) -> Option<StateIndex> {
+        for (i, state) in states.iter().enumerate() {
+            if state.itemset() == itemset {
+                return Some(StateIndex(i));
+            }
+        }
+        None
+    }
+
+    fn build_transitions(
         grammar: &'g Grammar,
         states: &[State<'g>],
-        start_rule: Rule<'g>,
-    ) -> BTreeMap<(StateIndex, Option<Symbol<'g>>), Vec<Action<'g>>> {
-
-        let mut actions = BTreeMap::new();
-
-        // Pre-allocate an empty list for all (state_i, maybe_symbol)-pairs
-        for (src_state_index, _src_state) in states.iter().enumerate() {
-            let src_state_index = StateIndex(src_state_index);
-            for symbol in grammar.symbols() {
-                let key = (src_state_index, Some(symbol));
-                actions.insert(key, vec![]);
-            }
-            actions.insert((src_state_index, None), vec![]);
-        }
+    ) -> BTreeMap<(StateIndex, SymbolIndex), StateIndex> {
+        let mut transitions: BTreeMap<(StateIndex, SymbolIndex), StateIndex> = BTreeMap::new();
 
         for (src_state_index, src_state) in states.iter().enumerate() {
             let src_state_index = StateIndex(src_state_index);
-            for src_item in src_state.itemset().items() {
-                match src_item.next_symbol() {
-                    Some(symbol) => {
-                        let dst_state = src_state.itemset().follow(symbol);
-                        let dst_state_index = Self::state_index(&dst_state, states);
-                        let key = (src_state_index, Some(symbol));
-                        let actions_for = actions.get_mut(&key).unwrap();
-
-                        let action = Action::Shift(StateIndex(dst_state_index));
-                        if !actions_for.contains(&action) {
-                            actions_for.push(action);
-                        }
-
-                    }
-                    None => {
-                        for symbol in grammar.symbols() {
-                            let key = (src_state_index, Some(symbol));
-                            let actions_for = actions.get_mut(&key).unwrap();
-                            actions_for.push(Action::Reduce(src_item.rule()));
-                        }
-
-                        let key = (src_state_index, None);
-                        let actions_for = actions.get_mut(&key).unwrap();
-                        actions_for.push(Action::Reduce(src_item.rule()));
-                    }
+            for symbol in grammar.symbols() {
+                let symbol_index = symbol.index();
+                let dst_state_itemset: ItemSet<'_> = src_state.itemset().follow(symbol);
+                if let Some(dst_state_index) = Self::state_index(states, &dst_state_itemset) {
+                    transitions.insert((src_state_index, symbol_index), dst_state_index);
                 }
             }
         }
 
-        let key = (StateIndex(0), Some(start_rule.lhs()));
-        actions.get_mut(&key).unwrap().insert(0, Action::Halt);
-
-        actions
+        transitions
     }
 
-    fn state_index(itemset: &ItemSet, itemsets: &[State]) -> usize {
-        itemsets
-            .iter()
-            .enumerate()
-            .find_map(|(j, st)| {
-                if itemset == st.itemset() {
-                    Some(j)
-                } else {
-                    None
+    fn build_reductions(
+        states: &[State<'g>],
+    ) -> BTreeMap<StateIndex, Vec<Reduction<'g>>> {
+        let mut reduction_map = BTreeMap::new();
+        for (state_index, state) in states.iter().enumerate() {
+            let state_index = StateIndex(state_index);
+            for item in state.itemset().items() {
+                if item.is_finished() {
+                    if !reduction_map.contains_key(&state_index) {
+                        reduction_map.insert(state_index, vec![]);
+                    }
+                    let reductions = reduction_map.get_mut(&state_index).unwrap();
+                    reductions.push(Reduction(item.rule(), ReductionCondition::Always));
                 }
-            })
-            .unwrap()
+            }
+        }
+        reduction_map
+    }
+
+    pub fn actions(&self, state: State<'g>, symbol: Option<Symbol<'g>>) -> Vec<Action<'g>> {
+        let state_index = Self::state_index(&self.states, state.itemset()).unwrap();
+        self.get(state_index, symbol)
     }
 
     pub fn conflicts(&self) -> Vec<Conflict<'_, '_>> {
         let mut conflicts = vec![];
-        for (state_index, _state) in self.states.iter().enumerate() {
+        for (state_index, state) in self.states.iter().enumerate() {
             let state_index = StateIndex(state_index);
             for symbol in self.grammar.symbols() {
-                let key = (state_index, Some(symbol));
-                let actions = &self.actions[&key];
-                if actions.len() > 1 {
+                let actions = self.actions(state.clone(), Some(symbol));
+                let next_state = self.transitions.get(&(state_index, symbol.index()));
+                if next_state.is_some() && actions.len() > 1 {
                     conflicts.push(Conflict {
                         table: self,
                         state: state_index,
@@ -165,13 +166,47 @@ impl<'g> ParseTable<'g> {
                     });
                 }
             }
+
+            let symbol = None::<Symbol<'g>>;
+            let actions = self.actions(state.clone(), symbol);
+            if actions.len() > 1 {
+                conflicts.push(Conflict {
+                    table: self,
+                    state: state_index,
+                    symbol,
+                    actions: actions.clone(),
+                });
+            }
         }
         conflicts
     }
 
     pub fn get(&self, state_index: StateIndex, symbol: Option<Symbol<'g>>) -> Vec<Action<'g>> {
-        let key = (state_index, symbol);
-        self.actions.get(&key).unwrap().to_vec()
+        let mut actions = vec![];
+        if let Some(symbol) = symbol {
+            let key = (state_index, symbol.index());
+            if let Some(shift_state_index) = self.transitions.get(&key) {
+                actions.push(Action::Shift(*shift_state_index));
+            }
+        }
+
+        if let Some(reductions) = self.reductions.get(&state_index) {
+            for Reduction(rule, cond) in reductions {
+                match cond {
+                    ReductionCondition::Always => {
+                        actions.push(Action::Reduce(*rule));
+                    }
+                    ReductionCondition::If(nexts) => {
+                        if let Some(symbol) = symbol {
+                            if nexts.contains(&symbol.index()) {
+                                actions.push(Action::Reduce(*rule));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        actions
     }
 
     pub fn dump(&self) {

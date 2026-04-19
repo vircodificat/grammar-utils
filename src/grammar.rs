@@ -325,3 +325,9 @@ impl GrammarBuilder {
         panic!("No such symbol: {symbol_name}")
     }
 }
+
+impl<'g> Symbol<'g> {
+    pub(crate) fn index(&self) -> SymbolIndex {
+        self.index
+    }
+}

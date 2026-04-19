@@ -5,7 +5,7 @@ use super::*;
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct StateIndex(pub usize);
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Clone)]
 pub struct State<'g> {
     itemset: ItemSet<'g>,
 }

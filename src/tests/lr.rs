@@ -56,3 +56,18 @@ fn test_conflicts_lr3() {
     table.dump();
     assert_eq!(table.conflicts().len(), 3);
 }
+
+#[test]
+fn test_conflicts_lr4() {
+    let grammar = grammar! {
+        start -> E;
+        E -> A;
+        E -> B;
+        A -> x;
+        B -> x;
+    };
+
+    let start_rule = grammar.rules()[0];
+    let table = ParseTable::build(&grammar, start_rule);
+    table.dump();
+}
