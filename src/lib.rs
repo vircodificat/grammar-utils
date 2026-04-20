@@ -2,9 +2,6 @@
 mod tests;
 
 pub mod lr;
-pub mod ll1;
-pub mod lr0;
-pub mod lr1;
 
 mod macros;
 mod grammar;
