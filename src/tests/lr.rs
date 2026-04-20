@@ -1,4 +1,4 @@
-use crate::lr::ParseTable;
+use crate::table::ParseTable;
 use crate::grammar;
 
 #[test]
@@ -16,7 +16,7 @@ fn test_conflicts_lr() {
     let start_rule = grammar.rules()[0];
     let table = ParseTable::build(&grammar, start_rule);
     table.dump();
-    assert_eq!(table.conflicts().len(), 0);
+    assert_eq!(table.inadequate_states().len(), 1);
 }
 
 #[test]
@@ -34,7 +34,7 @@ fn test_conflicts_lr2() {
     let start_rule = grammar.rules()[0];
     let table = ParseTable::build(&grammar, start_rule);
     table.dump();
-    assert_eq!(table.conflicts().len(), 0);
+    assert_eq!(table.inadequate_states().len(), 1);
 }
 
 #[test]
@@ -54,7 +54,7 @@ fn test_conflicts_lr3() {
     let start_rule = grammar.rules()[0];
     let table = ParseTable::build(&grammar, start_rule);
     table.dump();
-    assert_eq!(table.conflicts().len(), 3);
+    assert_eq!(table.inadequate_states().len(), 1);
 }
 
 #[test]

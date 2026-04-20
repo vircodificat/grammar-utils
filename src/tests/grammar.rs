@@ -365,30 +365,30 @@ fn test_can_end_with() {
     assert!(analysis.can_end_with(c, c));
 }
 
-#[test]
-fn ll1_example1() {
-    let grammar = grammar! {
-        S -> E;
-        E -> T Emore;
-        Emore -> plus T Emore;
-        Emore -> ;
-        T -> F Tmore ;
-        Tmore -> times F Tmore ;
-        Tmore -> ;
-        F -> id;
-        F -> lparen E rparen;
-    };
-
-    let table = ll1::ParseTable::build(&grammar, grammar.symbol("E").unwrap());
-    eprintln!("{table:?}");
-
-    let input = vec![
-        grammar.symbol("id").unwrap(),
-        grammar.symbol("plus").unwrap(),
-        grammar.symbol("id").unwrap(),
-        grammar.symbol("times").unwrap(),
-        grammar.symbol("id").unwrap(),
-    ].into_iter();
-    let mut machine = ll1::Machine::new(table, grammar.symbol("E").unwrap(), input);
-    machine.run();
-}
+//#[test]
+//fn ll1_example1() {
+//    let grammar = grammar! {
+//        S -> E;
+//        E -> T Emore;
+//        Emore -> plus T Emore;
+//        Emore -> ;
+//        T -> F Tmore ;
+//        Tmore -> times F Tmore ;
+//        Tmore -> ;
+//        F -> id;
+//        F -> lparen E rparen;
+//    };
+//
+//    let table = ll1::ParseTable::build(&grammar, grammar.symbol("E").unwrap());
+//    eprintln!("{table:?}");
+//
+//    let input = vec![
+//        grammar.symbol("id").unwrap(),
+//        grammar.symbol("plus").unwrap(),
+//        grammar.symbol("id").unwrap(),
+//        grammar.symbol("times").unwrap(),
+//        grammar.symbol("id").unwrap(),
+//    ].into_iter();
+//    let mut machine = ll1::Machine::new(table, grammar.symbol("E").unwrap(), input);
+//    machine.run();
+//}

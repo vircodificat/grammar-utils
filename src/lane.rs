@@ -1,8 +1,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use crate::{Grammar, GrammarAnalysis, Symbol, SymbolIndex};
-
-use super::*;
+use crate::{Grammar, GrammarAnalysis, Symbol, SymbolIndex, Item};
+use crate::state::{State, StateIndex};
+use crate::item::ItemSet;
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Configuration<'g>(Item<'g>, StateIndex);

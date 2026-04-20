@@ -1,4 +1,4 @@
-use super::*;
+use crate::item::ItemSet;
 
 // TODO contents should be private
 #[derive(Debug)]
@@ -7,14 +7,13 @@ pub struct StateIndex(pub usize);
 
 #[derive(PartialEq, Eq, Clone)]
 pub struct State<'g> {
-    itemset: ItemSet<'g>,
+    pub(crate) index: StateIndex,
+    pub(crate) itemset: ItemSet<'g>,
 }
 
 impl<'g> State<'g> {
-    pub(crate) fn new(itemset: ItemSet<'g>) -> Self {
-        State {
-            itemset,
-        }
+    pub fn index(&self) -> StateIndex {
+        self.index
     }
 
     pub fn itemset(&self) -> &ItemSet<'g> {

@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use crate::grammar;
+use crate::{grammar, table::ParseTable};
 
 use super::*;
 
@@ -274,13 +274,13 @@ fn test_virdant() {
 //        println!("  {symbol}");
 //    }
 
-    let table = crate::lr::ParseTable::build(&grammar, grammar.rules()[0]);
+    let table = ParseTable::build(&grammar, grammar.rules()[0]);
     println!("Number of states: {}", table.states.len());
     println!();
 
     println!("Conflicts:");
-    for conflict in table.conflicts() {
-        eprintln!("    {conflict:?}");
+    for states in table.inadequate_states() {
+        eprintln!("    {states:?}");
         //eprintln!("    {:?}", conflict.state());
         eprintln!();
     }

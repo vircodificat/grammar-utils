@@ -1,6 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use super::*;
+use crate::{Grammar, Symbol, Rule};
 
 /// A structure for calculating the set of nullable nonterminals
 /// as well as the FIRST and FOLLOW sets for each nonterminal.
